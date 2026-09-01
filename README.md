@@ -41,3 +41,5 @@ bydxxq/
 建议使用 VSCode Git 可视化功能，并且装一个 gh 命令行，有什么不懂的地方让 AI 来做。
 
 提交前先同步，单独开 PR 提交本轮更改，不要直接 commit 到 main 分支。
+
+BYDXXQ
