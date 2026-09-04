@@ -418,7 +418,7 @@ WITH horizons(slot, horizon_start, horizon_end) AS (
 )
 INSERT OR IGNORE INTO load_forecasts
     (station_id, forecast_time, horizon_start, horizon_end, predicted_load_kw,
-     predicted_available_chargers, model_version, actual_load_kw, generated_at)
+     predicted_available_chargers, is_peak, model_version, actual_load_kw, generated_at)
 SELECT
     s.id,
     '2026-09-01T00:00:00Z',
@@ -426,6 +426,7 @@ SELECT
     h.horizon_end,
     round(18 + s.id * 4.5 + h.slot * 3.25, 3),
     6 - (SELECT COUNT(*) FROM chargers fc WHERE fc.station_id = s.id AND fc.status = 'fault'),
+    CASE WHEN h.slot = 2 THEN 1 ELSE 0 END,
     'demo-v2',
     CASE WHEN h.slot = 1 THEN round(16 + s.id * 3.8, 3) ELSE NULL END,
     '2026-08-31T23:00:00Z'

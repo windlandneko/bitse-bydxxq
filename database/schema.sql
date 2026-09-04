@@ -8,9 +8,9 @@ PRAGMA busy_timeout = 5000;
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     phone TEXT NOT NULL UNIQUE,
-    nickname TEXT NOT NULL DEFAULT '新用户',
+    nickname TEXT NOT NULL,
     avatar_path TEXT,
-    wallet_balance NUMERIC NOT NULL DEFAULT 0 CHECK (wallet_balance >= 0),
+    wallet_balance NUMERIC NOT NULL DEFAULT 0,
     status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'frozen', 'disabled')),
     freeze_reason TEXT,
     last_login_at TEXT,
@@ -88,7 +88,11 @@ CREATE TABLE IF NOT EXISTS reservations (
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
     CHECK (expires_at > reserved_at),
-    CHECK (ended_at IS NULL OR started_at IS NULL OR ended_at >= started_at)
+    CHECK (ended_at IS NULL OR started_at IS NULL OR ended_at >= started_at),
+    CHECK (status <> 'active' OR (started_at IS NULL AND ended_at IS NULL)),
+    CHECK (status <> 'started' OR (started_at IS NOT NULL AND ended_at IS NULL)),
+    CHECK (status NOT IN ('cancelled', 'expired') OR ended_at IS NOT NULL),
+    CHECK (status <> 'completed' OR (started_at IS NOT NULL AND ended_at IS NOT NULL))
 );
 
 CREATE TABLE IF NOT EXISTS charging_sessions (
@@ -150,23 +154,39 @@ CREATE TABLE IF NOT EXISTS wallet_transactions (
     transaction_no TEXT NOT NULL UNIQUE,
     transaction_type TEXT NOT NULL CHECK (transaction_type IN ('recharge', 'charge', 'refund', 'adjustment')),
     amount NUMERIC NOT NULL CHECK (amount <> 0),
-    balance_before NUMERIC NOT NULL CHECK (balance_before >= 0),
-    balance_after NUMERIC NOT NULL CHECK (balance_after >= 0),
+    balance_before NUMERIC NOT NULL,
+    balance_after NUMERIC NOT NULL,
     order_id INTEGER REFERENCES orders(id) ON DELETE RESTRICT,
     idempotency_key TEXT NOT NULL UNIQUE,
     remark TEXT,
-    created_at TEXT NOT NULL
+    created_at TEXT NOT NULL,
+    CHECK (
+        (transaction_type IN ('recharge', 'refund') AND amount > 0)
+        OR (transaction_type = 'charge' AND amount < 0)
+        OR transaction_type = 'adjustment'
+    ),
+    CHECK (transaction_type <> 'charge' OR balance_before > 0),
+    CHECK (balance_after = round(balance_before + amount, 2)),
+    CHECK (transaction_type NOT IN ('charge', 'refund') OR order_id IS NOT NULL)
 );
 
 CREATE TABLE IF NOT EXISTS charger_status_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     charger_id INTEGER NOT NULL REFERENCES chargers(id) ON DELETE RESTRICT,
-    from_status TEXT,
-    to_status TEXT NOT NULL,
+    from_status TEXT CHECK (
+        from_status IS NULL OR from_status IN
+        ('idle', 'reserved', 'charging', 'fault', 'offline', 'maintenance')
+    ),
+    to_status TEXT NOT NULL CHECK (
+        to_status IN
+        ('idle', 'reserved', 'charging', 'fault', 'offline', 'maintenance')
+    ),
     reason TEXT,
     source TEXT NOT NULL CHECK (source IN ('user', 'admin', 'system')),
     operator_admin_id INTEGER REFERENCES admins(id) ON DELETE RESTRICT,
-    occurred_at TEXT NOT NULL
+    occurred_at TEXT NOT NULL,
+    CHECK (from_status IS NULL OR from_status <> to_status),
+    CHECK (source <> 'admin' OR operator_admin_id IS NOT NULL)
 );
 
 CREATE TABLE IF NOT EXISTS admin_audit_logs (
@@ -204,6 +224,7 @@ CREATE TABLE IF NOT EXISTS load_forecasts (
     horizon_end TEXT NOT NULL,
     predicted_load_kw NUMERIC NOT NULL CHECK (predicted_load_kw >= 0),
     predicted_available_chargers INTEGER NOT NULL CHECK (predicted_available_chargers >= 0),
+    is_peak INTEGER NOT NULL DEFAULT 0 CHECK (is_peak IN (0, 1)),
     model_version TEXT NOT NULL,
     actual_load_kw NUMERIC CHECK (actual_load_kw IS NULL OR actual_load_kw >= 0),
     generated_at TEXT NOT NULL,
@@ -242,6 +263,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_active_reservation_charger
     ON reservations(charger_id) WHERE status IN ('active', 'started');
 CREATE UNIQUE INDEX IF NOT EXISTS uq_active_session_user
     ON charging_sessions(user_id) WHERE status IN ('preparing', 'charging', 'interrupted', 'settling');
+CREATE UNIQUE INDEX IF NOT EXISTS uq_active_session_charger
+    ON charging_sessions(charger_id) WHERE status IN ('preparing', 'charging', 'interrupted', 'settling');
 
 CREATE TRIGGER IF NOT EXISTS trg_tariffs_no_active_overlap_insert
 BEFORE INSERT ON tariffs
@@ -284,6 +307,7 @@ BEGIN
         WHERE r.id = NEW.reservation_id
           AND r.user_id = NEW.user_id
           AND r.charger_id = NEW.charger_id
+          AND r.status IN ('active', 'started', 'completed')
           AND c.station_id = NEW.station_id
     );
 END;
@@ -298,6 +322,7 @@ BEGIN
         WHERE r.id = NEW.reservation_id
           AND r.user_id = NEW.user_id
           AND r.charger_id = NEW.charger_id
+          AND r.status IN ('active', 'started', 'completed')
           AND c.station_id = NEW.station_id
     );
 END;
@@ -311,6 +336,7 @@ BEGIN
         WHERE s.id = NEW.session_id
           AND s.user_id = NEW.user_id
           AND s.charger_id = NEW.charger_id
+          AND s.status IN ('completed', 'settling', 'settled', 'failed')
           AND s.station_id = NEW.station_id
     );
 END;
@@ -324,6 +350,7 @@ BEGIN
         WHERE s.id = NEW.session_id
           AND s.user_id = NEW.user_id
           AND s.charger_id = NEW.charger_id
+          AND s.status IN ('completed', 'settling', 'settled', 'failed')
           AND s.station_id = NEW.station_id
     );
 END;
