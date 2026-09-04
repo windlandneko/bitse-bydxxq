@@ -64,26 +64,23 @@ VALUES
     (5, 'DC002', 'dc', 60.000, 'idle', 22, 79200, 264.000, '2026-09-01T00:00:00Z', '2026-07-31T23:00:00Z', '2026-09-01T00:00:00Z'),
     (5, 'DC003', 'dc', 60.000, 'idle', 21, 75600, 252.000, '2026-09-01T00:00:00Z', '2026-07-31T23:00:00Z', '2026-09-01T00:00:00Z');
 
-WITH tariff_seed(id, station_id, charger_type, electricity_price, service_price, effective_from,
-                 status, created_by, created_at) AS (
+WITH tariff_seed(id, station_id, charger_type, electricity_price, service_price,
+                 created_by, created_at) AS (
     VALUES
-        (1, 1, 'all', 1.2000, 0.5000, '2026-08-01T00:00:00Z', 'active', 1, '2026-07-31T23:00:00Z'),
-        (2, 2, 'all', 1.1800, 0.5000, '2026-08-01T00:00:00Z', 'active', 1, '2026-07-31T23:00:00Z'),
-        (3, 3, 'all', 1.1500, 0.4500, '2026-08-01T00:00:00Z', 'active', 1, '2026-07-31T23:00:00Z'),
-        (4, 4, 'all', 1.2200, 0.5000, '2026-08-01T00:00:00Z', 'active', 1, '2026-07-31T23:00:00Z'),
-        (5, 5, 'all', 1.1000, 0.4500, '2026-08-01T00:00:00Z', 'active', 1, '2026-07-31T23:00:00Z')
+        (1, 1, 'all', 1.2000, 0.5000, 1, '2026-07-31T23:00:00Z'),
+        (2, 2, 'all', 1.1800, 0.5000, 1, '2026-07-31T23:00:00Z'),
+        (3, 3, 'all', 1.1500, 0.4500, 1, '2026-07-31T23:00:00Z'),
+        (4, 4, 'all', 1.2200, 0.5000, 1, '2026-07-31T23:00:00Z'),
+        (5, 5, 'all', 1.1000, 0.4500, 1, '2026-07-31T23:00:00Z')
 )
 INSERT INTO tariffs
-    (id, station_id, charger_type, electricity_price, service_price, effective_from,
-     status, created_by, created_at)
+    (id, station_id, charger_type, electricity_price, service_price, created_by, created_at)
 SELECT
     ts.id,
     ts.station_id,
     ts.charger_type,
     ts.electricity_price,
     ts.service_price,
-    ts.effective_from,
-    ts.status,
     ts.created_by,
     ts.created_at
 FROM tariff_seed ts
@@ -92,7 +89,6 @@ WHERE NOT EXISTS (
     FROM tariffs t
     WHERE t.station_id = ts.station_id
       AND t.charger_type = ts.charger_type
-      AND t.effective_from = ts.effective_from
 );
 
 -- One completed reservation and session per station per day, covering 31 days.
@@ -214,7 +210,6 @@ SELECT
 FROM charging_sessions cs
 JOIN tariffs t ON t.station_id = cs.station_id
     AND t.charger_type = 'all'
-    AND t.status = 'active'
 WHERE cs.session_no LIKE 'SES2026%';
 
 -- A completed high-energy session for user 5 intentionally exceeds the wallet's
@@ -287,7 +282,7 @@ SELECT
     cs.ended_at,
     cs.ended_at
 FROM charging_sessions cs
-JOIN tariffs t ON t.station_id = cs.station_id AND t.charger_type = 'all' AND t.status = 'active'
+JOIN tariffs t ON t.station_id = cs.station_id AND t.charger_type = 'all'
 WHERE cs.session_no = 'SES2026081550';
 
 -- Initial balances are deliberately different for the normal and debt users.
@@ -359,46 +354,6 @@ SET wallet_balance = (
     )
 WHERE id BETWEEN 1 AND 5;
 
--- Daily statistics for every station and every historical date. Revenue and
--- settled metrics are sourced from orders, so the dashboard can cross-check v_daily_revenue.
-WITH RECURSIVE dates(day_index, stat_date) AS (
-    SELECT 0, '2026-08-01'
-    UNION ALL
-    SELECT day_index + 1, date(stat_date, '+1 day')
-    FROM dates
-    WHERE day_index < 30
-), daily AS (
-    SELECT
-        o.station_id,
-        substr(o.settled_at, 1, 10) AS stat_date,
-        COUNT(*) AS order_count,
-        COUNT(CASE WHEN o.status IN ('paid', 'refunded') THEN 1 END) AS settled_order_count,
-        round(SUM(CASE WHEN o.status IN ('paid', 'refunded') THEN o.paid_amount ELSE 0 END), 2) AS revenue,
-        round(SUM(CASE WHEN o.status IN ('paid', 'refunded') THEN o.energy_kwh ELSE 0 END), 3) AS energy_kwh,
-        SUM(CASE WHEN o.status IN ('paid', 'refunded') THEN o.duration_seconds ELSE 0 END) AS charging_seconds
-    FROM orders o
-    GROUP BY o.station_id, substr(o.settled_at, 1, 10)
-)
-INSERT OR IGNORE INTO station_daily_stats
-    (station_id, stat_date, order_count, settled_order_count, revenue, energy_kwh, charging_seconds,
-     new_user_count, fault_count)
-SELECT
-    s.id,
-    d.stat_date,
-    COALESCE(x.order_count, 0),
-    COALESCE(x.settled_order_count, 0),
-    COALESCE(x.revenue, 0),
-    COALESCE(x.energy_kwh, 0),
-    COALESCE(x.charging_seconds, 0),
-    COUNT(DISTINCT CASE WHEN substr(u.created_at, 1, 10) = d.stat_date THEN u.id END),
-    (SELECT COUNT(*) FROM chargers fc WHERE fc.station_id = s.id AND fc.status = 'fault')
-FROM stations s
-CROSS JOIN dates d
-LEFT JOIN daily x ON x.station_id = s.id AND x.stat_date = d.stat_date
-LEFT JOIN orders o ON o.station_id = s.id AND substr(o.settled_at, 1, 10) = d.stat_date
-LEFT JOIN users u ON u.id = o.user_id
-GROUP BY s.id, d.stat_date, x.order_count, x.settled_order_count, x.revenue, x.energy_kwh, x.charging_seconds;
-
 INSERT OR IGNORE INTO charger_status_history
     (id, charger_id, from_status, to_status, reason, source, operator_admin_id, occurred_at)
 VALUES
@@ -432,14 +387,5 @@ SELECT
     '2026-08-31T23:00:00Z'
 FROM stations s
 CROSS JOIN horizons h;
-
-INSERT OR IGNORE INTO outbox_events
-    (event_id, aggregate_type, aggregate_id, event_type, payload_json, status, retry_count, created_at)
-VALUES
-    ('seed-station-1', 'station', 1, 'station.seeded', '{"station_code":"ST001","charger_count":6}', 'published', 0, '2026-08-01T00:00:00Z'),
-    ('seed-station-2', 'station', 2, 'station.seeded', '{"station_code":"ST002","charger_count":6}', 'published', 0, '2026-08-01T00:00:00Z'),
-    ('seed-station-3', 'station', 3, 'station.seeded', '{"station_code":"ST003","charger_count":6}', 'published', 0, '2026-08-01T00:00:00Z'),
-    ('seed-station-4', 'station', 4, 'station.seeded', '{"station_code":"ST004","charger_count":6}', 'published', 0, '2026-08-01T00:00:00Z'),
-    ('seed-station-5', 'station', 5, 'station.seeded', '{"station_code":"ST005","charger_count":6}', 'published', 0, '2026-08-01T00:00:00Z');
 
 COMMIT;
