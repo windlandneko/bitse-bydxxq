@@ -28,4 +28,4 @@ add_custom_target(format-check
 )
 
 # manage multi projects
-add_subdirectory(calculator)
+# add_subdirectory()
