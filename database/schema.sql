@@ -227,6 +227,10 @@ CREATE INDEX IF NOT EXISTS idx_history_charger_time ON charger_status_history(ch
 CREATE INDEX IF NOT EXISTS idx_audit_target_time ON admin_audit_logs(target_type, target_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_forecasts_station_horizon ON load_forecasts(station_id, horizon_start);
 
+CREATE UNIQUE INDEX IF NOT EXISTS uq_charge_order
+    ON wallet_transactions(order_id)
+    WHERE transaction_type = 'charge' AND order_id IS NOT NULL;
+
 CREATE UNIQUE INDEX IF NOT EXISTS uq_active_reservation_user
     ON reservations(user_id) WHERE status IN ('active', 'started');
 CREATE UNIQUE INDEX IF NOT EXISTS uq_active_reservation_charger
