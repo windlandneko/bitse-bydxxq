@@ -30,7 +30,7 @@ bydxxq/
 
 全员在 WSL Ubuntu-22.04 + WSLg 环境下开发。
 
-- Qt/C++：使用 C++20 标准，Qt Creator 6.0.2 + Qt 5.15.3。
+- Qt/C++：使用 C++17 标准，Qt Creator 6.0.2 + Qt 6。
 
 - Web：使用 Vite + Vue + SQLite 技术栈；包管理工具使用 npm，格式化工具使用 oxfmt + oxlint。
 

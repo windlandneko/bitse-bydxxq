@@ -1,0 +1,8 @@
+<RCC>
+ <qresource prefix="/icons">
+  <file alias="calculator.svg">icons/calculator.svg</file>
+ </qresource>
+ <qresource prefix="/styles">
+  <file alias="calculator.qss">styles/calculator.qss</file>
+ </qresource>
+</RCC>

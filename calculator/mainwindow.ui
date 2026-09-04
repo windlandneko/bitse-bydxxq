@@ -1,0 +1,425 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>340</width>
+    <height>460</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>320</width>
+    <height>440</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>财务计算器</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="mainLayout">
+    <property name="spacing">
+     <number>5</number>
+    </property>
+    <property name="leftMargin">
+     <number>8</number>
+    </property>
+    <property name="topMargin">
+     <number>8</number>
+    </property>
+    <property name="rightMargin">
+     <number>8</number>
+    </property>
+    <property name="bottomMargin">
+     <number>8</number>
+    </property>
+    <item>
+     <widget class="QLineEdit" name="expressionEdit">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>34</height>
+       </size>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight</set>
+      </property>
+      <property name="placeholderText">
+       <string>输入表达式</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLabel" name="resultLabel">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>30</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>0</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QFrame" name="keyPanel">
+      <layout class="QGridLayout" name="keyLayout">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <property name="spacing">
+        <number>4</number>
+       </property>
+       <item row="0" column="0">
+        <widget class="QPushButton" name="clearButton">
+         <property name="minimumSize">
+          <size>
+           <width>72</width>
+           <height>38</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>C</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QPushButton" name="backButton">
+         <property name="minimumSize">
+          <size>
+           <width>72</width>
+           <height>38</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>←</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="2">
+        <widget class="DraggableButton" name="divideButton">
+         <property name="minimumSize">
+          <size>
+           <width>72</width>
+           <height>38</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>÷</string>
+         </property>
+         <property name="value" stdset="0">
+          <string>/</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3">
+        <widget class="DraggableButton" name="multiplyButton">
+         <property name="minimumSize">
+          <size>
+           <width>72</width>
+           <height>38</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>×</string>
+         </property>
+         <property name="value" stdset="0">
+          <string>*</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="DraggableButton" name="sevenButton">
+         <property name="text">
+          <string>7</string>
+         </property>
+         <property name="value" stdset="0">
+          <string>7</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="DraggableButton" name="eightButton">
+         <property name="text">
+          <string>8</string>
+         </property>
+         <property name="value" stdset="0">
+          <string>8</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="2">
+        <widget class="DraggableButton" name="nineButton">
+         <property name="text">
+          <string>9</string>
+         </property>
+         <property name="value" stdset="0">
+          <string>9</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="3">
+        <widget class="DraggableButton" name="minusButton">
+         <property name="text">
+          <string>−</string>
+         </property>
+         <property name="value" stdset="0">
+          <string>-</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="DraggableButton" name="fourButton">
+         <property name="text">
+          <string>4</string>
+         </property>
+         <property name="value" stdset="0">
+          <string>4</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="DraggableButton" name="fiveButton">
+         <property name="text">
+          <string>5</string>
+         </property>
+         <property name="value" stdset="0">
+          <string>5</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="2">
+        <widget class="DraggableButton" name="sixButton">
+         <property name="text">
+          <string>6</string>
+         </property>
+         <property name="value" stdset="0">
+          <string>6</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="3">
+        <widget class="DraggableButton" name="plusButton">
+         <property name="text">
+          <string>+</string>
+         </property>
+         <property name="value" stdset="0">
+          <string>+</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="DraggableButton" name="oneButton">
+         <property name="text">
+          <string>1</string>
+         </property>
+         <property name="value" stdset="0">
+          <string>1</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="DraggableButton" name="twoButton">
+         <property name="text">
+          <string>2</string>
+         </property>
+         <property name="value" stdset="0">
+          <string>2</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="2">
+        <widget class="DraggableButton" name="threeButton">
+         <property name="text">
+          <string>3</string>
+         </property>
+         <property name="value" stdset="0">
+          <string>3</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="3" rowspan="2">
+        <widget class="QPushButton" name="equalButton">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>=</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0" colspan="2">
+        <widget class="DraggableButton" name="zeroButton">
+         <property name="text">
+          <string>0</string>
+         </property>
+         <property name="value" stdset="0">
+          <string>0</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="2">
+        <widget class="DraggableButton" name="dotButton">
+         <property name="text">
+          <string>.</string>
+         </property>
+         <property name="value" stdset="0">
+          <string>.</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QGroupBox" name="financeGroup">
+      <property name="title">
+       <string>财务计算</string>
+      </property>
+      <layout class="QFormLayout" name="financeLayout">
+       <property name="horizontalSpacing">
+        <number>6</number>
+       </property>
+       <property name="verticalSpacing">
+        <number>5</number>
+       </property>
+       <property name="leftMargin">
+        <number>7</number>
+       </property>
+       <property name="topMargin">
+        <number>7</number>
+       </property>
+       <property name="rightMargin">
+        <number>7</number>
+       </property>
+       <property name="bottomMargin">
+        <number>7</number>
+       </property>
+       <item row="0" column="0">
+        <widget class="QLabel" name="principalLabel">
+         <property name="text">
+          <string>本金</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+       <widget class="QDoubleSpinBox" name="principalSpin">
+         <property name="buttonSymbols">
+          <enum>QAbstractSpinBox::NoButtons</enum>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="suffix">
+          <string> 元</string>
+         </property>
+         <property name="maximum">
+          <double>1000000000.000000000000000</double>
+         </property>
+         <property name="value">
+          <double>10000.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+       <widget class="QLabel" name="financeResultTitleLabel">
+         <property name="text">
+          <string>到期本息</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLabel" name="financeResultLabel">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+       <widget class="QLabel" name="parameterTitleLabel">
+         <property name="text">
+          <string>当前方案</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <layout class="QHBoxLayout" name="parameterLayout">
+         <item>
+          <widget class="QLabel" name="parameterLabel">
+           <property name="text">
+            <string>单利，年利率 3.00%，期限 1 年</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="parameterSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="financeButton">
+           <property name="text">
+            <string>设置</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>DraggableButton</class>
+   <extends>QPushButton</extends>
+   <header>draggablebutton.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

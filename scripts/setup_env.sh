@@ -4,15 +4,21 @@ set -euo pipefail
 echo "==> 更新软件源"
 sudo apt update
 
-echo "==> 安装编译工具链 + Qt5 + QtWebEngine + SQLite"
-sudo apt install -y \
+echo "==> 安装编译工具链 + Qt 6"
+sudo apt-get install -y \
   build-essential \
   cmake \
+  gdb \
+  clang-format \
   clangd \
-  qtbase5-dev \
-  qtwebengine5-dev \
-  qttools5-dev-tools \
-  libqt5sql5-sqlite
+  qt6-base-dev \
+  qt6-tools-dev-tools \
+  qtcreator \
+  designer-qt6 \
+  libqt6svg6 \
+  curl \
+  ca-certificates \
+  git
 
 echo "==> 安装 Node.js latest LTS"
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -

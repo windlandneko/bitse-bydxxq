@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.16)
 project(bydxxq LANGUAGES CXX)
 
-# std=c++20
-set(CMAKE_CXX_STANDARD 20)
+# Qt 6 推荐使用 C++17
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -15,6 +15,17 @@ add_custom_target(link_compile_commands ALL
     COMMENT "Syncing compile_commands.json to root for clangd"
 )
 
+add_custom_target(format
+    COMMAND "${CMAKE_SOURCE_DIR}/scripts/format-cpp.sh"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    COMMENT "Formatting all C/C++ sources"
+)
+
+add_custom_target(format-check
+    COMMAND "${CMAKE_SOURCE_DIR}/scripts/format-cpp.sh" --check
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    COMMENT "Checking C/C++ source formatting"
+)
+
 # manage multi projects
-add_subdirectory(test-qt)
-add_subdirectory(test-qt-another)
+add_subdirectory(calculator)

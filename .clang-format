@@ -1,17 +1,13 @@
 # https://clang.llvm.org/docs/ClangFormatStyleOptions.html
-BasedOnStyle: Google
+BasedOnStyle: LLVM
 
 # 缩进
-IndentWidth: 2
+IndentWidth: 4
 ContinuationIndentWidth: 2
 
 AllowShortLoopsOnASingleLine: true # 允许短循环写在单行
 AllowShortIfStatementsOnASingleLine: true # 允许短 if 语句写在单行
 AllowShortLambdasOnASingleLine: Empty # 除了空语句外，其他 lambda 必须换行
-
-# AllowAllArgumentsOnNextLine: false # 函数调用的所有参数都放在下一行
-BreakAfterOpenBracketFunction: true # 左括号后换行
-BreakBeforeCloseBracketFunction: true # 右括号前换行
 
 PenaltyBreakAssignment: 114514 # 禁止在 `=` 赋值运算符后直接换行
 

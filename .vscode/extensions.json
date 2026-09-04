@@ -1,6 +1,7 @@
 {
     "recommendations": [
         "llvm-vs-code-extensions.vscode-clangd",
+        "editorconfig.editorconfig",
         "usernamehw.errorlens",
         "oxc.oxc-vscode"
     ]

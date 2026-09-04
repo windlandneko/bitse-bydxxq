@@ -1,9 +1,22 @@
 {
+    "[c]": {
+        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
+        "editor.formatOnSave": true,
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4
+    },
+    "[cpp]": {
+        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
+        "editor.formatOnSave": true,
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4
+    },
     "clangd.arguments": [
         "--completion-style=detailed",
         "--header-insertion=never",
-        "--pch-storage=memory",
+        "--pch-storage=memory"
     ],
     "clangd.onConfigChanged": "prompt",
-    "C_Cpp.intelliSenseEngine": "disabled"
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "editor.detectIndentation": false
 }
