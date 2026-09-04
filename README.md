@@ -11,17 +11,22 @@ bydxxq/
 ├── .vscode/               # clangd 配置
 ├── CMakeLists.txt         # 顶层构建配置（CMake 子工程）
 ├── CMakePresets.json      # 构建预设：Debug / Release
-├── spec/                  # 需求/实现文档（for AI）
-├── docs/                  # 普通文档（for human）
-│   └── 00_初始化指南.md    # 环境搭建流程
+├── database/              # SQLite 建库与演示数据脚本
+│   ├── schema.sql         # 表、索引和视图
+│   └── seed.sql           # 开发/演示种子数据
+├── spec/                  # 需求与验收清单（for AI）
+│   └── TODO.md            # 待实现功能和测试用例
+├── docs/                  # 关键设计与使用文档（for human）
+│   ├── 00_初始化指南.md    # 环境搭建流程
+│   ├── 数据库架构设计.md    # 数据分层、约束和事务边界
+│   └── 数据库函数调用说明.md # 服务层数据库调用契约
 ├── reference/             # 课程要求与参考材料
 │   ├── 东软电动汽车充电桩应用管理平台项目要求书.md
 │   ├── 需求规格说明书.md
 │   └── images/
-├── scripts/               # 脚本目录
-│   └── setup_env.sh
-├── test-qt/               # 测试工程
-└── test-qt-another/       # 测试工程
+└── scripts/               # 环境与格式化脚本
+    ├── setup_env.sh
+    └── format-cpp.sh
 ```
 
 其中 reference 内的文件仅供参考，以 docs 和 spec 为准。
