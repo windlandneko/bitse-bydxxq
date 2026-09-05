@@ -54,6 +54,29 @@ export interface ForecastItem {
   isPeak: boolean
 }
 
+export interface ForecastEvalPoint {
+  time: string
+  actual: number
+  pred: number
+  baseline: number
+}
+
+export interface ForecastEvalMetrics {
+  mae: number
+  rmse: number
+  wape: number
+  medianApe: number
+}
+
+export interface ForecastEval {
+  dataset: string
+  generatedAt: string
+  testRange: string
+  metrics: ForecastEvalMetrics
+  baseline: ForecastEvalMetrics
+  series: ForecastEvalPoint[]
+}
+
 export interface DashboardData {
   generatedAt: string
   dataCutoff: string
@@ -64,6 +87,7 @@ export interface DashboardData {
   hourlyHeatmap: HeatmapItem[]
   chargerTypeRatio: ChargerTypeRatioItem[]
   forecast24h: ForecastItem[]
+  forecastEval?: ForecastEval
 }
 
 export const emptyDashboard: DashboardData = {
