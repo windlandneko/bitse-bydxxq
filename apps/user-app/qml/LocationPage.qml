@@ -81,7 +81,7 @@ Flickable {
         height: 56
         model: mobile.presets
         textRole: 'name'
-        displayText: '下拉选择区域'
+        displayText: '选择区域'
         leftPadding: Theme.cardPadding
         rightPadding: 56
         Accessible.name: '选择常用区域'
@@ -135,14 +135,6 @@ Flickable {
           }
         }
       }
-    }
-    AppText {
-      width: parent.width
-      text: '地址由腾讯位置服务解析，区域选择用于模拟当前位置。列表显示直线距离，实际路线请查看导航。'
-      color: Theme.muted
-      font.pixelSize: Theme.labelSize
-      wrapMode: Text.WordWrap
-      lineHeight: 1.5
     }
   }
 }

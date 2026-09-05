@@ -7,6 +7,7 @@ Extra data/empty-state scenarios are intercepted in this browser only, never wri
 
 import argparse
 import copy
+import re
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -41,6 +42,24 @@ def check_layout(page, width, height):
   assert page.locator('canvas').count() >= 7
 
 
+def check_tooltips(page, data):
+  for title, field, pattern in [
+    ('近 30 日营收与订单', 'revenueTrend', r'¥ \d+\.\d{2}'),
+    ('一周充电时段分布', 'hourlyHeatmap', r'\d+\.\d{2} kWh'),
+    ('未来 24 小时负荷', 'forecast24h', r'\d+\.\d kW'),
+  ]:
+    if not data[field]:
+      continue
+    chart = page.locator('.chart-card').filter(has=page.get_by_role('heading', name=title))
+    canvas = chart.locator('.chart')
+    bounds = canvas.bounding_box()
+    canvas.hover(position={'x': bounds['width'] * 0.52, 'y': bounds['height'] * 0.48})
+    chart.get_by_text(re.compile(pattern), exact=True).wait_for()
+    assert 'undefined' not in chart.inner_text()
+    assert 'NaN' not in chart.inner_text()
+  page.mouse.move(0, 0)
+
+
 with sync_playwright() as playwright:
   browser = playwright.chromium.launch()
   page = browser.new_page(viewport={'width': 1920, 'height': 1080})
@@ -66,6 +85,7 @@ with sync_playwright() as playwright:
       assert f'共 {station["totalChargers"]} 台' in description
     # Screenshots only record real backend data, before synthetic test scenarios.
     page.screenshot(path=str(args.output / f'dashboard-{width}.png'))
+  check_tooltips(page, actual)
   if len(actual['stations']) > 1:
     target = actual['stations'][1]
     capacity = page.locator(f'.capacity-item button[data-station-id="{target["id"]}"]')
@@ -168,6 +188,42 @@ with sync_playwright() as playwright:
     check_contained(page.locator('.capacity-empty'), page.locator('.capacity-card'))
   page.screenshot(path=str(args.output / 'fixture-empty-stations-1366.png'))
 
+  restored = copy.deepcopy(actual)
+  restored['stations'] = [
+    {
+      **prototype,
+      'id': 2000 + index,
+      'name': f'地图交互测试电站{index}',
+      'longitude': 121 + index,
+      'latitude': 31 + index,
+      'totalChargers': 6,
+      'idleChargers': 3,
+      'onlineRate': 100,
+    }
+    for index in range(3)
+  ]
+  page.unroute('**/api/dashboard')
+  page.route('**/api/dashboard', lambda route: route.fulfill(json=restored))
+  page.get_by_role('button', name='刷新数据').click()
+  page.locator('.capacity-item').nth(2).wait_for()
+  page.wait_for_timeout(700)
+  check_tooltips(page, restored)
+  chart = page.locator('.map-chart')
+  bounds = chart.bounding_box()
+  # The middle fixture station is at the center of the plotted axes, above the bottom labels.
+  chart.click(
+    position={
+      'x': bounds['width'] / 2,
+      'y': bounds['height'] / 2 - 10 * min(1366 / 1920, 768 / 1080),
+    }
+  )
+  assert page.locator('.station-detail b').inner_text() == restored['stations'][1]['name']
+  assert (
+    page.locator('.capacity-item button[data-station-id="2001"]').get_attribute('aria-pressed')
+    == 'true'
+  )
+  check_layout(page, 1366, 768)
+
   page.unroute('**/api/dashboard')
   page.route('**/api/dashboard', lambda route: route.fulfill(status=503, body='test disconnect'))
   page.wait_for_timeout(1000)
@@ -178,5 +234,5 @@ with sync_playwright() as playwright:
   assert not errors, errors
   browser.close()
 print(
-  '通过：真实数据、两尺寸88px指标/无溢出、文案减噪、站点联动与键盘、多站点/大数值/空数据、断连保留数据'
+  '通过：真实数据、两尺寸布局、图表提示/空态恢复、地图点击/站点联动/键盘、多站点/大数值、过期与断连'
 )

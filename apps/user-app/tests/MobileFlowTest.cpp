@@ -15,11 +15,7 @@
 #include <QSignalSpy>
 #include <QWebEngineView>
 #include <QtTest>
-#include <memory>
 
-// Opt-in integration test. Run against a disposable charging-server database.
-// Buttons are activated through their QML clicked signals, exercising the
-// actual screen bindings as well as the C++ controller and HTTP service.
 class MobileFlowTest final : public QObject {
   Q_OBJECT
 
@@ -173,7 +169,7 @@ private slots:
     QTRY_VERIFY_WITH_TIMEOUT(map->title().contains("腾讯"), 30000);
     auto *mapStatus = window.findChild<QLabel *>("mapStatus");
     QVERIFY(mapStatus);
-    QTRY_VERIFY_WITH_TIMEOUT(mapStatus->text().startsWith("腾讯地图"), 30000);
+    QTRY_VERIFY_WITH_TIMEOUT(mapStatus->isHidden(), 30000);
     QTest::qWait(4000);
     for (const auto &size : {QSize(430, 860), QSize(360, 800)}) {
       window.resize(size);
@@ -279,6 +275,13 @@ private slots:
       10000);
     QTRY_COMPARE(controller->page(), QString("charge"));
     capture(window, "05-reserved");
+    auto *countdown = item(window, "reservationCountdown");
+    QVERIFY(countdown);
+    QCOMPARE(countdown->property("text").toString(),
+             controller->reservationRemaining());
+    const auto remaining = countdown->property("text").toString();
+    QTRY_VERIFY_WITH_TIMEOUT(
+      countdown->property("text").toString() != remaining, 2000);
     click(window, "cancelReservationButton");
     click(window, "confirmOrderActionButton");
     QTRY_COMPARE_WITH_TIMEOUT(

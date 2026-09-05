@@ -1,6 +1,22 @@
 #include "AdminUi.h"
 #include "AdminWindowState.h"
 
+#include <QComboBox>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QDoubleSpinBox>
+#include <QFormLayout>
+#include <QLabel>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QSignalBlocker>
+#include <QSpinBox>
+#include <QStatusBar>
+#include <QTableWidget>
+#include <QTime>
+#include <QTimer>
+#include <QVBoxLayout>
+
 using namespace adminui;
 
 void AdminMainWindow::Impl::buildStations() {
@@ -106,7 +122,7 @@ void AdminMainWindow::Impl::stationEditor(const QJsonObject &existing) {
   const bool editing = !existing.isEmpty();
   auto *dialog = new QDialog(w);
   dialog->setAttribute(Qt::WA_DeleteOnClose);
-  dialog->setWindowTitle(editing ? "编辑电站" : "新增电站并自动创建电桩");
+  dialog->setWindowTitle(editing ? "编辑电站" : "新增电站");
   dialog->setMinimumWidth(500);
   auto *layout = new QVBoxLayout(dialog);
   auto *form = new QFormLayout;
@@ -172,8 +188,8 @@ void AdminMainWindow::Impl::stationEditor(const QJsonObject &existing) {
   }
   layout->addLayout(form);
   auto *tip = new QLabel(
-    editing ? "修改价格仅用于后续开始充电的订单，已有充电订单按原价格结算。"
-            : "保存时自动分配电站、电桩编号，并一次性创建指定数量的电桩。");
+    editing ? "新价格从下次开始充电起生效，已开始充电的订单保留原价。"
+            : "保存后自动创建指定数量的电桩并分配编号。");
   tip->setWordWrap(true);
   layout->addWidget(tip);
   auto *error = new QLabel;
@@ -385,8 +401,8 @@ void AdminMainWindow::Impl::refreshChargers(bool interactive) {
     "admin.chargers", params,
     [this](QJsonValue data) {
       fill(chargerTable, data.toArray(), chargerColumns);
-      chargerCount->setText(QString("当前筛选共 %1 个电桩 · 运维操作会写入日志")
-                              .arg(data.toArray().size()));
+      chargerCount->setText(
+        QString("当前筛选共 %1 个电桩").arg(data.toArray().size()));
     },
     interactive);
 }

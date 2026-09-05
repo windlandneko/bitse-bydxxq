@@ -26,6 +26,7 @@ Column {
   }
   AppText {
     width: parent.width
+    visible: !!parent.description
     text: parent.description
     color: Theme.muted
     wrapMode: Text.WordWrap

@@ -5,7 +5,11 @@ import {
   HeatmapChart,
   LineChart,
   PieChart,
-  ScatterChart,
+  type BarSeriesOption,
+  type EffectScatterSeriesOption,
+  type HeatmapSeriesOption,
+  type LineSeriesOption,
+  type PieSeriesOption,
 } from 'echarts/charts'
 import {
   GraphicComponent,
@@ -13,6 +17,11 @@ import {
   LegendComponent,
   TooltipComponent,
   VisualMapComponent,
+  type GraphicComponentOption,
+  type GridComponentOption,
+  type LegendComponentOption,
+  type TooltipComponentOption,
+  type VisualMapComponentOption,
 } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 
@@ -22,7 +31,6 @@ echarts.use([
   HeatmapChart,
   LineChart,
   PieChart,
-  ScatterChart,
   GraphicComponent,
   GridComponent,
   LegendComponent,
@@ -32,3 +40,21 @@ echarts.use([
 ])
 export const { init, graphic } = echarts
 export type ChartInstance = ReturnType<typeof init>
+export type { ECElementEvent as ChartEvent } from 'echarts/core'
+export type ChartOption = echarts.ComposeOption<
+  | BarSeriesOption
+  | EffectScatterSeriesOption
+  | HeatmapSeriesOption
+  | LineSeriesOption
+  | PieSeriesOption
+  | GraphicComponentOption
+  | GridComponentOption
+  | LegendComponentOption
+  | TooltipComponentOption
+  | VisualMapComponentOption
+>
+type TooltipParams = Parameters<Exclude<TooltipComponentOption['formatter'], string | undefined>>[0]
+
+export function firstTooltipItem(params: TooltipParams) {
+  return Array.isArray(params) ? params[0] : params
+}

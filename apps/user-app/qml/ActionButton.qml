@@ -28,7 +28,11 @@ Button {
       Layout.fillWidth: true
       text: control.text
       font: control.font
-      color: !control.enabled ? Theme.disabledText : control.tone === 'primary' ? 'white' : control.tone === 'danger' ? Theme.danger : Theme.primary
+      color: {
+        if (!control.enabled)
+          return Theme.disabledText
+        return control.tone === 'primary' ? 'white' : Theme.primary
+      }
       horizontalAlignment: Text.AlignHCenter
       verticalAlignment: Text.AlignVCenter
       elide: Text.ElideRight
@@ -42,7 +46,17 @@ Button {
   }
   background: Rectangle {
     radius: Theme.cardRadius
-    color: !control.enabled ? Theme.disabled : control.tone === 'primary' ? (control.down ? Theme.primaryPressed : Theme.primary) : control.tone === 'danger' ? (control.down ? '#f3d8cf' : Theme.dangerLight) : control.down ? '#d4e4d5' : control.tone === 'quiet' ? (control.hovered ? Theme.primaryLight : 'transparent') : Theme.primaryLight
+    color: {
+      if (!control.enabled)
+        return Theme.disabled
+      if (control.tone === 'primary')
+        return control.down ? Theme.primaryPressed : Theme.primary
+      if (control.down)
+        return '#d4e4d5'
+      if (control.tone === 'quiet' && !control.hovered)
+        return 'transparent'
+      return Theme.primaryLight
+    }
     border.color: control.tone === 'primary' ? Theme.accent : Theme.primary
     border.width: control.visualFocus ? 2 : 0
   }

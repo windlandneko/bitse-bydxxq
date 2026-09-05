@@ -1,4 +1,4 @@
-"""Reproducible Jiaxing public-data backtest, isolated from course live stations."""
+"""Backtest load forecasts against the Jiaxing charging dataset."""
 
 from __future__ import annotations
 
@@ -30,8 +30,6 @@ def load_jiaxing(path: Path) -> tuple[dict, dict]:
   starts = pd.to_datetime(raw['Start Time'].str.strip(), errors='coerce')
   ends = pd.to_datetime(raw['End Time'].str.strip(), errors='coerce')
   energies = pd.to_numeric(raw['Transaction power/kwh'], errors='coerce')
-  # Explicit range screening protects against broken dates; no quantile cutoffs
-  # learned from future data, and no rows removed to improve reported errors.
   valid = (
     starts.notna()
     & ends.notna()
@@ -60,7 +58,7 @@ def load_jiaxing(path: Path) -> tuple[dict, dict]:
     'excludedSessions': int((~valid).sum()),
     'inputEnergyKwh': round(energy_total, 6),
     'allocatedEnergyKwh': round(sum(sum(s.values()) for s in values.values()), 6),
-    'screening': '起止时间有效、结束晚于开始、有限非负电量、会话不超过7天；不按未来分位数删除数据。',
+    'screening': '起止时间有效、结束晚于开始、有限非负电量、会话不超过7天。',
   }
 
 

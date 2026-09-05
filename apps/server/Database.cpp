@@ -3,7 +3,6 @@
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
-#include <QJsonDocument>
 #include <QPasswordDigestor>
 #include <QRandomGenerator>
 #include <QSqlError>
@@ -30,8 +29,9 @@ QJsonObject failure(const QString &code, const QString &message) {
           {"error", QJsonObject{{"code", code}, {"message", message}}}};
 }
 
-static QSqlQuery query(QSqlDatabase db, const QString &sql,
-                       const QVariantList &values) {
+namespace {
+QSqlQuery query(const QSqlDatabase &db, const QString &sql,
+                const QVariantList &values) {
   QSqlQuery q(db);
   if (!q.prepare(sql))
     throw BusinessError("DATABASE_ERROR",
@@ -42,6 +42,16 @@ static QSqlQuery query(QSqlDatabase db, const QString &sql,
                         "数据库操作失败：" + q.lastError().text());
   return q;
 }
+
+QJsonObject currentRow(const QSqlQuery &query, const QSqlRecord &record) {
+  QJsonObject result;
+  for (int column = 0; column < record.count(); ++column)
+    result.insert(record.fieldName(column),
+                  QJsonValue::fromVariant(query.value(column)));
+  return result;
+}
+} // namespace
+
 void Database::execute(const QString &sql, const QVariantList &values) {
   query(db_, sql, values);
 }
@@ -50,18 +60,14 @@ qint64 Database::insert(const QString &sql, const QVariantList &values) {
 }
 QJsonArray Database::rows(const QString &sql, const QVariantList &values) {
   auto q = query(db_, sql, values);
+  const auto record = q.record();
   QJsonArray result;
-  while (q.next()) {
-    QJsonObject item;
-    for (int i = 0; i < q.record().count(); ++i)
-      item.insert(q.record().fieldName(i), QJsonValue::fromVariant(q.value(i)));
-    result.append(item);
-  }
+  while (q.next()) result.append(currentRow(q, record));
   return result;
 }
 QJsonObject Database::row(const QString &sql, const QVariantList &values) {
-  auto result = rows(sql, values);
-  return result.isEmpty() ? QJsonObject{} : result.first().toObject();
+  auto q = query(db_, sql, values);
+  return q.next() ? currentRow(q, q.record()) : QJsonObject{};
 }
 void Database::begin() { execute("BEGIN IMMEDIATE"); }
 void Database::commit() {

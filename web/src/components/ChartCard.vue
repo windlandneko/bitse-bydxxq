@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import BorderBox from './vendor/BorderBox.vue'
-defineProps<{ title: string; eyebrow?: string; className?: string }>()
+defineProps<{ title: string; eyebrow?: string }>()
 </script>
 <template>
-  <article class="chart-card" :class="className">
+  <article class="chart-card">
     <BorderBox>
       <div class="chart-card__inner">
         <header class="chart-card__header">

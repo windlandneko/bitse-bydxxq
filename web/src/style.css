@@ -468,7 +468,6 @@ h1 {
   }
 }
 
-/* The compact strip shares the same 88px baseline as the four headline KPIs. */
 .capacity-card {
   position: relative;
   min-width: 0;

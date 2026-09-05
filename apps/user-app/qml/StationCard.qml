@@ -56,11 +56,6 @@ Button {
       spacing: Theme.space
       visible: card.highlighted
       Badge {
-        text: '低拥堵推荐'
-        fill: '#edf3dd'
-        textColor: '#526e27'
-      }
-      Badge {
         text: '1 小时后预计空闲 ' + Number(card.stationData.predictedAvailableChargers || 0) + ' 桩'
         fill: '#f0f3eb'
         textColor: Theme.muted
@@ -90,7 +85,7 @@ Button {
         trailingIcon: 'navigation'
         horizontalPadding: Theme.space
         tone: 'secondary'
-        Accessible.name: '导航到' + (card.stationData.name || '') + '，距离' + Number(card.stationData.distanceKm || 0).toFixed(1) + '公里'
+        Accessible.name: '导航到' + (card.stationData.name || '') + '，直线距离' + Number(card.stationData.distanceKm || 0).toFixed(1) + '公里'
         onClicked: mobile.openNavigation(card.stationData)
       }
     }

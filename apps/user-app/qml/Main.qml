@@ -8,19 +8,56 @@ Rectangle {
   width: 430
   height: 860
   color: Theme.paper
-  property bool isTab: mobile.page === 'home' || mobile.page === 'orders' || mobile.page === 'profile'
-  property string title: ({
-      "home": '发现好电站',
-      "orders": '我的订单',
-      "profile": '我的',
-      "station": '电站详情',
-      "charge": '充电服务',
-      "settlement": '订单结算',
-      "receipt": '充电小票',
-      "location": '选择当前位置',
-      "recharge": '钱包充值',
-      "editProfile": '个人信息'
-    })[mobile.page] || ''
+  readonly property bool isTab: mobile.page === 'home' || mobile.page === 'orders' || mobile.page === 'profile'
+  readonly property var pageInfo: ({
+      "login": {
+        "title": '',
+        "source": 'LoginPage.qml'
+      },
+      "home": {
+        "title": '附近电站',
+        "source": 'HomePage.qml'
+      },
+      "orders": {
+        "title": '我的订单',
+        "source": 'OrdersPage.qml'
+      },
+      "profile": {
+        "title": '我的',
+        "source": 'ProfilePage.qml'
+      },
+      "station": {
+        "title": '电站详情',
+        "source": 'StationPage.qml'
+      },
+      "charge": {
+        "title": '充电服务',
+        "source": 'ChargingPage.qml'
+      },
+      "settlement": {
+        "title": '订单结算',
+        "source": 'ChargingPage.qml'
+      },
+      "receipt": {
+        "title": '充电小票',
+        "source": 'ReceiptPage.qml'
+      },
+      "location": {
+        "title": '选择当前位置',
+        "source": 'LocationPage.qml'
+      },
+      "recharge": {
+        "title": '钱包充值',
+        "source": 'RechargePage.qml'
+      },
+      "editProfile": {
+        "title": '个人信息',
+        "source": 'EditProfilePage.qml'
+      }
+    })[mobile.page] || {
+    "title": '',
+    "source": 'HomePage.qml'
+  }
 
   ColumnLayout {
     anchors.fill: parent
@@ -45,7 +82,7 @@ Rectangle {
         }
         AppText {
           Layout.fillWidth: true
-          text: root.title
+          text: root.pageInfo.title
           font.pixelSize: Theme.titleSize
           font.weight: Font.DemiBold
           elide: Text.ElideRight
@@ -87,14 +124,14 @@ Rectangle {
       Layout.preferredHeight: visible ? Math.max(48, offlineText.implicitHeight + 32) : 0
       visible: !mobile.online
       padding: Theme.pagePadding
-      Accessible.name: '服务暂时断开，点击重新连接'
+      Accessible.name: '连接中断，点击重试'
       onClicked: mobile.refresh()
       background: Rectangle {
         color: parent.down ? '#f4e5c5' : '#fff2d9'
       }
       contentItem: AppText {
         id: offlineText
-        text: '连接暂时中断，点击重试'
+        text: '连接中断，点击重试'
         font.pixelSize: Theme.bodySize
         color: Theme.amber
         wrapMode: Text.WordWrap
@@ -129,19 +166,7 @@ Rectangle {
       objectName: 'pageLoader'
       Layout.fillWidth: true
       Layout.fillHeight: true
-      source: ({
-          "login": 'LoginPage.qml',
-          "home": 'HomePage.qml',
-          "station": 'StationPage.qml',
-          "charge": 'ChargingPage.qml',
-          "settlement": 'ChargingPage.qml',
-          "receipt": 'ReceiptPage.qml',
-          "orders": 'OrdersPage.qml',
-          "profile": 'ProfilePage.qml',
-          "location": 'LocationPage.qml',
-          "recharge": 'RechargePage.qml',
-          "editProfile": 'EditProfilePage.qml'
-        })[mobile.page] || 'HomePage.qml'
+      source: root.pageInfo.source
     }
     Rectangle {
       objectName: 'mobileBottomNav'
@@ -262,7 +287,7 @@ Rectangle {
       spacing: Theme.cardPadding
       AppText {
         width: parent.width
-        text: '请先处理未完成订单'
+        text: '订单未完成'
         font.pixelSize: Theme.titleSize
         font.weight: Font.DemiBold
         wrapMode: Text.WordWrap

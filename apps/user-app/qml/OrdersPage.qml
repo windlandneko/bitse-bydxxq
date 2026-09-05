@@ -135,7 +135,6 @@ Flickable {
       width: parent.width
       visible: screen.filtered.length === 0
       title: '还没有充电订单'
-      description: '寻找附近电站，开始第一次充电。'
     }
     ActionButton {
       anchors.horizontalCenter: parent.horizontalCenter

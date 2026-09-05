@@ -1,5 +1,30 @@
 #include "AdminUi.h"
 #include "AdminWindowState.h"
+#include "ApiClient.h"
+
+#include <QAbstractButton>
+#include <QButtonGroup>
+#include <QChart>
+#include <QChartView>
+#include <QCheckBox>
+#include <QComboBox>
+#include <QDesktopServices>
+#include <QDialog>
+#include <QFormLayout>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QPointer>
+#include <QPushButton>
+#include <QSignalBlocker>
+#include <QStackedWidget>
+#include <QStatusBar>
+#include <QTableWidget>
+#include <QTime>
+#include <QTimer>
+#include <QUrl>
+#include <QVBoxLayout>
 
 using namespace adminui;
 
@@ -88,11 +113,11 @@ void AdminMainWindow::Impl::buildLogin() {
   form->addRow("账号", username);
   form->addRow("密码", password);
   layout->addLayout(form);
-  loginError = new QLabel("首次使用默认账号：admin / 123456");
+  loginError = new QLabel("默认账号：admin / 123456");
   loginError->setObjectName("adminLoginError");
   loginError->setWordWrap(true);
   layout->addWidget(loginError);
-  loginButton = new QPushButton("登录管理后台");
+  loginButton = new QPushButton("登录");
   loginButton->setObjectName("adminLoginButton");
   loginButton->setDefault(true);
   layout->addWidget(loginButton);
@@ -126,7 +151,6 @@ void AdminMainWindow::Impl::buildLogin() {
           + data.toObject().value("username").toString(username->text()));
         loginButton->setEnabled(true);
         password->clear();
-        loginError->setText("已安全退出，可重新登录");
         central->setCurrentIndex(1);
         pages->setCurrentIndex(0);
         refreshStations(false);
@@ -163,7 +187,7 @@ void AdminMainWindow::Impl::buildWorkspace() {
   }
   group->button(0)->setChecked(true);
   navigation->addStretch();
-  auto *screen = new QPushButton("打开数据大屏 ↗");
+  auto *screen = new QPushButton("打开数据大屏");
   navigation->addWidget(screen);
   QObject::connect(screen, &QPushButton::clicked, w, [this] {
     QDesktopServices::openUrl(QUrl(api->baseUrl()).resolved(QUrl("/")));
@@ -210,14 +234,12 @@ void AdminMainWindow::Impl::buildWorkspace() {
                    });
 }
 
-QWidget *AdminMainWindow::Impl::page(const QString &title,
-                                     QVBoxLayout **layout) {
+void AdminMainWindow::Impl::page(const QString &title, QVBoxLayout **layout) {
   auto *result = new QWidget;
   *layout = new QVBoxLayout(result);
   (*layout)->setContentsMargins(8, 8, 8, 8);
   (*layout)->addWidget(heading(title));
   pages->addWidget(result);
-  return result;
 }
 
 QLabel *AdminMainWindow::Impl::metric(const QString &title, QHBoxLayout *row) {
@@ -264,8 +286,7 @@ void AdminMainWindow::Impl::logoutNow() {
   forecastRunning = false;
   forecastRequestPending = false;
   ++session;
-  // Clear the token only after dispatch: the server must receive the existing
-  // session in order to invalidate it. A failed logout still clears local data.
+  // Send the current token before clearing it locally, even if logout fails.
   api->call(
     "auth.logout", {}, [](QJsonValue) {}, [](QString) {});
   api->setToken("");
@@ -291,6 +312,7 @@ void AdminMainWindow::Impl::logoutNow() {
   delete oldChart;
   updatedAt->setText("尚未同步");
   connection->setText("已退出登录");
+  loginError->setText("已退出登录");
   central->setCurrentIndex(0);
   password->setFocus();
 }

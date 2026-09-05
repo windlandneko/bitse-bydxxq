@@ -77,7 +77,6 @@ if [[ "$mode" != --check ]]; then
       archive="node-v$node_version-linux-$node_arch.tar.xz"
       curl --fail --silent --show-error --location "https://nodejs.org/dist/v$node_version/$archive" --output "$download_dir/$archive"
       curl --fail --silent --show-error --location "https://nodejs.org/dist/v$node_version/SHASUMS256.txt" --output "$download_dir/SHASUMS256.txt"
-      # Verify only the selected official archive before extracting executable code.
       awk -v archive="$archive" '$2 == archive { print; found=1 } END { if (!found) exit 1 }' "$download_dir/SHASUMS256.txt" > "$download_dir/checksum.txt"
       (cd "$download_dir" && sha256sum --check checksum.txt)
       mkdir -p "$download_dir/extracted"

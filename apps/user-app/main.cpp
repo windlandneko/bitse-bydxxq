@@ -4,7 +4,6 @@
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QDebug>
-#include <QDir>
 #include <QFontDatabase>
 #include <QQuickItem>
 #include <QQuickWidget>
