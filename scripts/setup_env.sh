@@ -8,11 +8,12 @@ apt_packages=(
   git curl ca-certificates xz-utils python3 python3-pip python3-venv
   qt6-base-dev qt6-base-dev-tools qt6-declarative-dev qt6-declarative-dev-tools
   qt6-webengine-dev qt6-webengine-dev-tools qt6-positioning-dev
-  libqt6charts6-dev libqt6svg6-dev libqt6sql6-sqlite
+  libqt6charts6-dev libqt6svg6-dev libqt6sql6-sqlite libqt6opengl6-dev
+  libqt6webenginecore6-bin
   qml6-module-qtqml qml6-module-qtqml-models qml6-module-qtqml-workerscript
   qml6-module-qtquick qml6-module-qtquick-controls qml6-module-qtquick-layouts
   qml6-module-qtquick-window qml6-module-qtquick-templates qml6-module-qtquick-nativestyle
-  fonts-noto-cjk fonts-dejavu-core libgl1-mesa-dri libegl1 libopengl-dev
+  fonts-noto-cjk fonts-dejavu-core libgl1-mesa-dri libgl-dev libegl-dev libopengl-dev
   xvfb xauth shellcheck
 )
 mode="${1:---all}"
