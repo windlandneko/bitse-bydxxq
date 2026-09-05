@@ -17,8 +17,7 @@
 using namespace adminui;
 
 void AdminMainWindow::Impl::buildOverview() {
-  QVBoxLayout *layout;
-  page("运营概览", &layout);
+  auto *layout = page("运营概览");
   auto *metrics = new QHBoxLayout;
   todayRevenue = metric("今日营收", metrics);
   monthRevenue = metric("本月营收", metrics);

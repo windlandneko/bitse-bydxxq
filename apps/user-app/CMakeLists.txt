@@ -15,7 +15,6 @@ target_link_libraries(charging-user PRIVATE
   Qt6::QuickControls2
   Qt6::WebEngineWidgets
 )
-set_target_properties(charging-user PROPERTIES WIN32_EXECUTABLE TRUE)
 
 option(BUILD_MOBILE_FLOW_TESTS "Build mobile UI/service integration test" ${BUILD_TESTING})
 if(BUILD_MOBILE_FLOW_TESTS)

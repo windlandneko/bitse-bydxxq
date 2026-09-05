@@ -102,6 +102,7 @@ void MobileController::login(const QString &phone) {
     const auto result = value.toObject();
     setUser(result.value("user").toObject().toVariantMap());
     m_tab = "home";
+    emit tabChanged();
     m_backStack.clear();
     setPage("home");
     if (m_presets.isEmpty())
@@ -149,10 +150,12 @@ void MobileController::setPage(const QString &page, bool push) {
 
 void MobileController::selectTab(const QString &tab) {
   if (!signedIn() || busy()) return;
-  m_tab = tab;
+  if (m_tab != tab) {
+    m_tab = tab;
+    emit tabChanged();
+  }
   m_backStack.clear();
   setPage(tab);
-  emit pageChanged();
   if (tab == "home") refreshStations();
   if (tab == "orders") fetchOrders();
   if (tab == "profile") refreshProfile();

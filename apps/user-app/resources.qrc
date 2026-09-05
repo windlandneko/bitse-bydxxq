@@ -44,6 +44,5 @@
   <qresource prefix="/assets">
     <file alias="brand.svg">assets/brand.svg</file>
     <file alias="illustrations/charging-hero.svg">assets/illustrations/charging-hero.svg</file>
-    <file alias="illustrations/charging-hero.png">assets/illustrations/charging-hero.png</file>
   </qresource>
 </RCC>

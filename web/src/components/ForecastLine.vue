@@ -18,8 +18,11 @@ const chartElement = useChart(() => {
     tooltip: {
       trigger: 'axis',
       formatter: (params) => {
-        const item = props.data[firstTooltipItem(params)?.dataIndex ?? 0]
-        return `${item?.time ?? ''}<br/><b>${Number(item?.predictedLoadKw ?? 0).toFixed(1)} kW</b>${item?.isPeak ? '<br/><span style="color:#ff6b6b">高峰预警</span>' : ''}`
+        const point = firstTooltipItem(params)
+        const item = point && props.data[point.dataIndex]
+        return item
+          ? `${item.time}<br/><b>${item.predictedLoadKw.toFixed(1)} kW</b>${item.isPeak ? '<br/><span style="color:#ff6b6b">高峰预警</span>' : ''}`
+          : ''
       },
     },
     xAxis: {

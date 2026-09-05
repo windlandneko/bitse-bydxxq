@@ -1,11 +1,4 @@
-export type ChargerStatusKey =
-  | 'idle'
-  | 'reserved'
-  | 'charging'
-  | 'fault'
-  | 'offline'
-  | 'maintenance'
-  | 'restarting'
+export type ChargerStatusKey = 'idle' | 'reserved' | 'charging' | 'fault' | 'offline' | 'restarting'
 
 export interface KpiData {
   totalChargingCount: number

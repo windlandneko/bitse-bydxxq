@@ -54,10 +54,7 @@ Rectangle {
         "title": '个人信息',
         "source": 'EditProfilePage.qml'
       }
-    })[mobile.page] || {
-    "title": '',
-    "source": 'HomePage.qml'
-  }
+    })[mobile.page]
 
   ColumnLayout {
     anchors.fill: parent
@@ -204,8 +201,9 @@ Rectangle {
             padding: 0
             Accessible.name: modelData.label
             enabled: !mobile.busy
-            checkable: true
-            checked: mobile.tab === modelData.key
+            highlighted: mobile.tab === modelData.key
+            Accessible.role: Accessible.PageTab
+            Accessible.selected: highlighted
             onClicked: mobile.selectTab(modelData.key)
             background: Rectangle {
               color: tabButton.down ? Theme.primaryLight : 'transparent'
@@ -221,19 +219,19 @@ Rectangle {
                 width: 64
                 height: 32
                 radius: 16
-                color: tabButton.checked ? Theme.accent : 'transparent'
+                color: tabButton.highlighted ? Theme.accent : 'transparent'
                 AppIcon {
                   anchors.centerIn: parent
                   name: tabButton.modelData.icon
-                  opacity: tabButton.checked ? 1 : 0.65
+                  opacity: tabButton.highlighted ? 1 : 0.65
                 }
               }
               AppText {
                 width: parent.width
                 text: tabButton.modelData.label
                 font.pixelSize: Theme.labelSize
-                font.weight: tabButton.checked ? Font.DemiBold : Font.Normal
-                color: tabButton.checked ? Theme.primary : Theme.muted
+                font.weight: tabButton.highlighted ? Font.DemiBold : Font.Normal
+                color: tabButton.highlighted ? Theme.primary : Theme.muted
                 horizontalAlignment: Text.AlignHCenter
               }
             }

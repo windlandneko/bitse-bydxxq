@@ -1,8 +1,10 @@
+#include "AdminUi.h"
 #include "AdminMainWindow.h"
 
 #include <QChartView>
 #include <QComboBox>
 #include <QDate>
+#include <QDateTime>
 #include <QDialog>
 #include <QDoubleSpinBox>
 #include <QHostAddress>
@@ -288,6 +290,38 @@ private slots:
   void cleanup() {
     window.reset();
     fixture.reset();
+  }
+
+  void serverTimestampFormats() {
+    const auto expected = QDateTime(QDate(2026, 9, 5), QTime(0, 0), Qt::UTC)
+                            .toLocalTime()
+                            .toString("yyyy-MM-dd HH:mm:ss");
+    for (const auto *timestamp :
+         {"2026-09-05T00:00:00Z", "2026-09-05T00:00:00.123Z",
+          "2026-09-05T08:00:00+08:00", "2026-09-05T08:00:00.123+08:00"})
+      QCOMPARE(adminui::timeText(timestamp), expected);
+    QCOMPARE(adminui::timeText(QJsonValue::Null), QString("—"));
+    QCOMPARE(adminui::timeText("invalid"), QString("—"));
+    QCOMPARE(adminui::duration(3661), QString("1小时 1分 1秒"));
+  }
+
+  void tableRefreshPreservesSelectionAfterSorting() {
+    std::unique_ptr<QTableWidget> rows(
+      adminui::table({"ID", "金额"}, "records"));
+    const auto columns = [](const QJsonObject &record) -> QVariantList {
+      return {record["id"].toInt(), adminui::money(record["balanceCents"])};
+    };
+    auto first = fixture->users.first().toObject();
+    first["balanceCents"] = 900;
+    const QJsonObject second{{"id", 2}, {"balanceCents", 1000}};
+    adminui::fill(rows.get(), {first, second}, columns);
+    rows->sortItems(1, Qt::AscendingOrder);
+    rows->selectRow(0);
+    QCOMPARE(adminui::selected(rows.get()), first);
+    first["balanceCents"] = 1200;
+    adminui::fill(rows.get(), {second, first}, columns);
+    QCOMPARE(rows->currentRow(), 1);
+    QCOMPARE(adminui::selected(rows.get()), first);
   }
 
   void loginRevenueAndTrend() {

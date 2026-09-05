@@ -34,15 +34,13 @@ QString number(const QJsonValue &value, int decimals) {
 }
 
 QString timeText(const QJsonValue &value) {
-  auto time = QDateTime::fromString(value.toString(), Qt::ISODateWithMs);
-  if (!time.isValid())
-    time = QDateTime::fromString(value.toString(), Qt::ISODate);
+  const auto time = QDateTime::fromString(value.toString(), Qt::ISODate);
   return time.isValid() ? time.toLocalTime().toString("yyyy-MM-dd HH:mm:ss")
                         : QStringLiteral("—");
 }
 
 QString duration(const QJsonValue &value) {
-  const auto seconds = qMax<qint64>(0, value.toVariant().toLongLong());
+  const auto seconds = value.toInteger();
   return QStringLiteral("%1小时 %2分 %3秒")
     .arg(seconds / 3600)
     .arg(seconds / 60 % 60)
@@ -89,8 +87,7 @@ QTableWidget *table(const QStringList &headers, const QString &name) {
 QJsonObject selected(QTableWidget *tableWidget) {
   const auto row = tableWidget->currentRow();
   if (row < 0 || !tableWidget->item(row, 0)) return {};
-  return QJsonObject::fromVariantMap(
-    tableWidget->item(row, 0)->data(Qt::UserRole).toMap());
+  return tableWidget->item(row, 0)->data(Qt::UserRole).value<QJsonObject>();
 }
 
 void fill(QTableWidget *target, const QJsonArray &rows,
@@ -118,7 +115,7 @@ void fill(QTableWidget *target, const QJsonArray &rows,
                                                           : "durationSeconds";
         cell->setData(Qt::UserRole + 1, item.value(key).toDouble());
       }
-      if (column == 0) cell->setData(Qt::UserRole, item.toVariantMap());
+      if (column == 0) cell->setData(Qt::UserRole, QVariant::fromValue(item));
       target->setItem(index, column, cell);
     }
   }
@@ -128,8 +125,8 @@ void fill(QTableWidget *target, const QJsonArray &rows,
   target->setCurrentItem(nullptr);
   if (!previousId.isUndefined()) {
     for (int row = 0; row < target->rowCount(); ++row) {
-      auto record = QJsonObject::fromVariantMap(
-        target->item(row, 0)->data(Qt::UserRole).toMap());
+      const auto
+        record = target->item(row, 0)->data(Qt::UserRole).value<QJsonObject>();
       if (record.value("id") == previousId) {
         target->selectRow(row);
         break;

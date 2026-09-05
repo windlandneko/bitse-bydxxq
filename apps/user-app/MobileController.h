@@ -12,7 +12,7 @@ class QJsonValue;
 class MobileController final : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString page READ page NOTIFY pageChanged)
-  Q_PROPERTY(QString tab READ tab NOTIFY pageChanged)
+  Q_PROPERTY(QString tab READ tab NOTIFY tabChanged)
   Q_PROPERTY(bool signedIn READ signedIn NOTIFY userChanged)
   Q_PROPERTY(QVariantMap user READ user NOTIFY userChanged)
   Q_PROPERTY(QVariantList stations READ stations NOTIFY stationsChanged)
@@ -90,6 +90,7 @@ public:
 
 signals:
   void pageChanged();
+  void tabChanged();
   void userChanged();
   void stationsChanged();
   void stationChanged();

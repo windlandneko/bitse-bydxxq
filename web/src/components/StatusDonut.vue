@@ -10,7 +10,6 @@ const colors: Record<ChargerStatusKey, string> = {
   charging: '#ffb84d',
   fault: '#ff5f72',
   offline: '#69758c',
-  maintenance: '#9d7cff',
   restarting: '#9d7cff',
 }
 
@@ -37,7 +36,7 @@ const chartElement = useChart(() => {
         data: props.data.map((item) => ({
           name: item.label,
           value: item.value,
-          itemStyle: { color: colors[item.key] ?? '#69758c' },
+          itemStyle: { color: colors[item.key] },
         })),
       },
     ],

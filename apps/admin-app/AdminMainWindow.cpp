@@ -234,12 +234,13 @@ void AdminMainWindow::Impl::buildWorkspace() {
                    });
 }
 
-void AdminMainWindow::Impl::page(const QString &title, QVBoxLayout **layout) {
+QVBoxLayout *AdminMainWindow::Impl::page(const QString &title) {
   auto *result = new QWidget;
-  *layout = new QVBoxLayout(result);
-  (*layout)->setContentsMargins(8, 8, 8, 8);
-  (*layout)->addWidget(heading(title));
+  auto *layout = new QVBoxLayout(result);
+  layout->setContentsMargins(8, 8, 8, 8);
+  layout->addWidget(heading(title));
   pages->addWidget(result);
+  return layout;
 }
 
 QLabel *AdminMainWindow::Impl::metric(const QString &title, QHBoxLayout *row) {

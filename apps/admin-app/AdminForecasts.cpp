@@ -41,8 +41,7 @@ QString peaks(const QJsonArray &hours) {
 } // namespace
 
 void AdminMainWindow::Impl::buildForecasts() {
-  QVBoxLayout *layout;
-  page("站点与电桩负荷预测", &layout);
+  auto *layout = page("站点与电桩负荷预测");
   auto *row = new QHBoxLayout;
   forecastStation = new QComboBox;
   forecastStation->setObjectName("forecastStationFilter");

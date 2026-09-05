@@ -9,12 +9,9 @@ Flickable {
   contentHeight: content.height + Theme.pagePadding * 2
   clip: true
   boundsBehavior: Flickable.StopAtBounds
-  property var suggestion: {
-    for (var i = 0; i < mobile.stations.length; i++)
-      if (mobile.stations[i].recommended && Number(mobile.stations[i].predictedAvailableChargers) > 0)
-        return mobile.stations[i]
-    return null
-  }
+  readonly property var suggestion: mobile.stations.find(function (station) {
+      return station.recommended
+    })
   ScrollBar.vertical: ScrollBar {
     policy: ScrollBar.AsNeeded
   }
@@ -79,44 +76,46 @@ Flickable {
         onTriggered: mobile.refreshStations()
       }
     }
-    Button {
-      id: activeBanner
-      objectName: 'activeOrderBanner'
+    Loader {
       width: parent.width
-      implicitHeight: activeInfo.implicitHeight + Theme.cardPadding * 2
-      visible: Number(mobile.activeOrder.id || 0) > 0
-      padding: Theme.cardPadding
-      Accessible.name: '处理' + mobile.statusLabel(mobile.activeOrder.status || '') + '订单'
-      onClicked: mobile.openActiveOrder()
-      background: Rectangle {
-        radius: Theme.cardRadius
-        color: activeBanner.down ? '#e7dfbd' : '#f0eddc'
-        border.color: '#e0d4a8'
-        border.width: activeBanner.visualFocus ? 2 : 1
-      }
-      contentItem: RowLayout {
-        spacing: Theme.space
-        Column {
-          id: activeInfo
-          Layout.fillWidth: true
-          spacing: Theme.microSpace
-          AppText {
-            text: '待处理：' + mobile.statusLabel(mobile.activeOrder.status || '') + '订单'
-            font.weight: Font.Medium
-            color: '#796230'
-          }
-          AppText {
-            text: mobile.activeOrder.stationName || ''
-            width: parent.width
-            elide: Text.ElideRight
-            font.pixelSize: Theme.labelSize
-            color: '#796230'
-          }
+      active: mobile.activeOrder.id !== undefined
+      sourceComponent: Button {
+        id: activeBanner
+        objectName: 'activeOrderBanner'
+        implicitHeight: activeInfo.implicitHeight + Theme.cardPadding * 2
+        padding: Theme.cardPadding
+        Accessible.name: '处理' + mobile.statusLabel(mobile.activeOrder.status) + '订单'
+        onClicked: mobile.openActiveOrder()
+        background: Rectangle {
+          radius: Theme.cardRadius
+          color: activeBanner.down ? '#e7dfbd' : '#f0eddc'
+          border.color: '#e0d4a8'
+          border.width: activeBanner.visualFocus ? 2 : 1
         }
-        AppIcon {
-          name: 'chevron-right'
-          Layout.preferredWidth: 24
-          Layout.preferredHeight: 24
+        contentItem: RowLayout {
+          spacing: Theme.space
+          Column {
+            id: activeInfo
+            Layout.fillWidth: true
+            spacing: Theme.microSpace
+            AppText {
+              text: '待处理：' + mobile.statusLabel(mobile.activeOrder.status) + '订单'
+              font.weight: Font.Medium
+              color: '#796230'
+            }
+            AppText {
+              text: mobile.activeOrder.stationName
+              width: parent.width
+              elide: Text.ElideRight
+              font.pixelSize: Theme.labelSize
+              color: '#796230'
+            }
+          }
+          AppIcon {
+            name: 'chevron-right'
+            Layout.preferredWidth: 24
+            Layout.preferredHeight: 24
+          }
         }
       }
     }
@@ -155,16 +154,20 @@ Flickable {
     Column {
       width: parent.width
       spacing: Theme.cardPadding
-      visible: screen.suggestion !== null
+      visible: screen.suggestion !== undefined
       AppText {
         text: '推荐电站'
         font.pixelSize: Theme.bodyLargeSize
         font.weight: Font.Medium
       }
-      StationCard {
+      Loader {
+        objectName: 'recommendedStationLoader'
         width: parent.width
-        stationData: screen.suggestion || ({})
-        highlighted: true
+        active: screen.suggestion !== undefined
+        sourceComponent: StationCard {
+          stationData: screen.suggestion
+          highlighted: true
+        }
       }
     }
     Column {
