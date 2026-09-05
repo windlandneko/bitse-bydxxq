@@ -56,6 +56,26 @@ cmake --build build/debug -j
 cmake -S . -B build/user-only -DBUILD_ADMIN_APP=OFF
 ```
 
+## 构建与运行 Web 数据大屏
+
+Web 子系统对应需求中的大屏（UC-W），由 Vue 3 + ECharts 展示聚合后的 JSON 数据。浏览器不直接连接 SQLite。
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+默认演示数据位于 `web/public/data/dashboard.json`。连接真实数据库时，从仓库根目录执行：
+
+```bash
+python scripts/export_dashboard.py \
+  --db database/charge_platform.db \
+  --out web/public/data/dashboard.json
+```
+
+详细说明见 [`web/README.md`](web/README.md)。
+
 ## 团队协作与 Git 规范
 
 建议使用 VSCode Git 可视化功能，并且装一个 gh 命令行，有什么不懂的地方让 AI 来做。

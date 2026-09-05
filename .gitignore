@@ -78,6 +78,7 @@ Thumbs.db
 node_modules/
 dist/
 .vite/
+work/
 
 # ==========================================
 # Python
