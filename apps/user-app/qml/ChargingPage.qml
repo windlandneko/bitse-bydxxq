@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
 
 Item {
   id: screen
@@ -8,64 +9,55 @@ Item {
   property string stateName: order.status || ''
   property real stateOfCharge: Number(order.soc || 0)
   Flickable {
-    id: scroll
     anchors.fill: parent
     anchors.bottomMargin: actionDock.height
     contentWidth: width
-    contentHeight: content.height + 30
+    contentHeight: content.height + Theme.pagePadding * 2
     boundsBehavior: Flickable.StopAtBounds
     clip: true
     ScrollBar.vertical: ScrollBar {
       policy: ScrollBar.AsNeeded
     }
-
     Column {
       id: content
-      x: 22
-      y: 8
-      width: parent.width - 44
-      spacing: 20
+      x: Theme.pagePadding
+      y: Theme.pagePadding
+      width: parent.width - Theme.pagePadding * 2
+      spacing: Theme.cardPadding
       Column {
         width: parent.width
-        spacing: 8
+        spacing: Theme.space
         AppText {
-          anchors.horizontalCenter: parent.horizontalCenter
-          text: screen.stateName === 'reserved' ? '电桩已为你预留' : screen.stateName === 'charging' ? '正在补充美好能量' : '本次充电已结束'
-          font.pixelSize: 24
-          font.weight: Font.Bold
+          width: parent.width
+          text: screen.stateName === 'reserved' ? '电桩已为你预留' : screen.stateName === 'charging' ? '正在充电' : '本次充电已结束'
+          font.pixelSize: Theme.titleSize
+          font.weight: Font.DemiBold
+          horizontalAlignment: Text.AlignHCenter
         }
         AppText {
           width: parent.width
           text: screen.order.stationName || ''
           horizontalAlignment: Text.AlignHCenter
-          font.pixelSize: 12
+          font.pixelSize: Theme.bodySize
           color: Theme.muted
           elide: Text.ElideRight
         }
       }
-
       Item {
         width: parent.width
-        height: 210
+        height: 200
         Rectangle {
           anchors.centerIn: parent
-          width: 197
-          height: 197
-          radius: 100
-          color: '#edf2e7'
-          Rectangle {
-            anchors.centerIn: parent
-            width: 156
-            height: 156
-            radius: 80
-            color: '#e3ecd9'
-          }
+          width: 176
+          height: 176
+          radius: 88
+          color: '#e8efdf'
         }
         Canvas {
           id: progress
           anchors.centerIn: parent
-          width: 215
-          height: 215
+          width: 200
+          height: 200
           property real value: screen.stateName === 'reserved' ? 1 : Math.min(1, screen.stateOfCharge / 100)
           onValueChanged: requestPaint()
           onPaint: {
@@ -74,48 +66,49 @@ Item {
             ctx.lineWidth = 8
             ctx.strokeStyle = '#dce6d6'
             ctx.beginPath()
-            ctx.arc(width / 2, height / 2, 100, 0, Math.PI * 2)
+            ctx.arc(width / 2, height / 2, 92, 0, Math.PI * 2)
             ctx.stroke()
             ctx.strokeStyle = '#508e56'
             ctx.lineCap = 'round'
             ctx.beginPath()
-            ctx.arc(width / 2, height / 2, 100, -Math.PI / 2, Math.PI * 2 * value - Math.PI / 2)
+            ctx.arc(width / 2, height / 2, 92, -Math.PI / 2, Math.PI * 2 * value - Math.PI / 2)
             ctx.stroke()
           }
         }
         Column {
           anchors.centerIn: parent
-          spacing: 6
+          spacing: Theme.space
           AppText {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: screen.stateName === 'reserved' ? '预约保留中' : '电池电量'
-            color: '#6f876a'
-            font.pixelSize: 12
+            text: screen.stateName === 'reserved' ? '预约剩余时间' : '电池电量'
+            color: Theme.muted
+            font.pixelSize: Theme.labelSize
           }
           AppText {
             anchors.horizontalCenter: parent.horizontalCenter
             text: screen.stateName === 'reserved' ? (mobile.clockMs > 0 ? mobile.reservationRemaining() : '') : Math.round(screen.stateOfCharge) + '%'
             color: Theme.primary
-            font.pixelSize: 43
-            font.weight: Font.Bold
+            font.pixelSize: 40
+            font.weight: Font.DemiBold
           }
           Badge {
             anchors.horizontalCenter: parent.horizontalCenter
             text: mobile.statusLabel(screen.stateName)
             fill: '#d4e4c7'
-            textColor: '#4c7240'
+            textColor: '#456b38'
           }
         }
       }
-
       Rectangle {
         width: parent.width
-        height: 103
-        radius: 21
-        color: 'white'
+        height: metrics.implicitHeight + Theme.cardPadding * 2
+        radius: Theme.cardRadius
+        color: Theme.card
         Row {
-          anchors.fill: parent
-          anchors.margins: 18
+          id: metrics
+          x: Theme.cardPadding
+          y: Theme.cardPadding
+          width: parent.width - Theme.cardPadding * 2
           Repeater {
             model: [{
                 "label": '已充电量',
@@ -132,42 +125,41 @@ Item {
               }]
             delegate: Column {
               required property var modelData
-              width: (content.width - 36) / 3
-              spacing: 7
+              width: metrics.width / 3
+              spacing: Theme.microSpace
               AppText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: modelData.label
-                font.pixelSize: 11
+                font.pixelSize: Theme.labelSize
                 color: Theme.muted
               }
               AppText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: modelData.value
-                font.pixelSize: 23
-                font.weight: Font.Bold
+                font.pixelSize: Theme.titleSize
+                font.weight: Font.DemiBold
               }
               AppText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: modelData.unit
-                font.pixelSize: 10
+                font.pixelSize: Theme.labelSize
                 color: Theme.muted
               }
             }
           }
         }
       }
-
       Rectangle {
         width: parent.width
-        height: detail.height + 38
-        radius: 20
-        color: 'white'
+        height: detail.height + Theme.cardPadding * 2
+        radius: Theme.cardRadius
+        color: Theme.card
         Column {
           id: detail
-          x: 18
-          y: 19
-          width: parent.width - 36
-          spacing: 15
+          x: Theme.cardPadding
+          y: Theme.cardPadding
+          width: parent.width - Theme.cardPadding * 2
+          spacing: Theme.space
           KeyValue {
             width: parent.width
             label: '充电桩'
@@ -196,33 +188,31 @@ Item {
           }
         }
       }
-
       Rectangle {
         width: parent.width
-        height: chargingNote.implicitHeight + 28
-        radius: 15
+        height: chargingNote.implicitHeight + Theme.cardPadding * 2
+        radius: Theme.cardRadius
         color: '#edeedc'
         AppText {
           id: chargingNote
-          x: 15
-          y: 14
-          width: parent.width - 30
-          text: screen.stateName === 'reserved' ? '请在预约保留时间内连接车辆并开始充电。超时将自动取消预约。' : screen.stateName === 'charging' ? '充电持续进行，退出应用不会停止计费。电池充满或可用余额耗尽时会自动结束。' : (screen.order.stopReason ? screen.order.stopReason + '。' : '') + '请确认本次用电明细，费用将从钱包余额扣除。'
-          font.pixelSize: 12
-          color: '#7b7d4e'
+          x: Theme.cardPadding
+          y: Theme.cardPadding
+          width: parent.width - Theme.cardPadding * 2
+          text: screen.stateName === 'reserved' ? '请在保留时间内连接车辆并开始充电，超时会自动取消预约。' : screen.stateName === 'charging' ? '退出应用后仍会计费；充满电或余额用尽时自动结束。' : (screen.order.stopReason ? screen.order.stopReason + '。' : '') + '确认后将从钱包余额扣除费用。'
+          font.pixelSize: Theme.bodySize
+          color: '#666b3f'
           wrapMode: Text.WordWrap
           lineHeight: 1.5
         }
       }
     }
   }
-
   Rectangle {
     id: actionDock
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.bottom: parent.bottom
-    height: actionColumn.height + 24
+    height: actionColumn.height + Theme.pagePadding * 2
     color: Theme.paper
     Rectangle {
       width: parent.width
@@ -231,10 +221,10 @@ Item {
     }
     Column {
       id: actionColumn
-      x: 22
-      y: 12
-      width: parent.width - 44
-      spacing: 5
+      x: Theme.pagePadding
+      y: Theme.pagePadding
+      width: parent.width - Theme.pagePadding * 2
+      spacing: Theme.space
       ActionButton {
         objectName: 'startChargingButton'
         width: parent.width
@@ -248,7 +238,7 @@ Item {
         width: parent.width
         visible: screen.stateName === 'charging'
         enabled: !mobile.busy
-        text: mobile.page === 'settlement' ? '结束充电，确认费用' : '结束充电，前往结算'
+        text: '结束充电，前往结算'
         onClicked: {
           confirmation.action = 'stop'
           confirmation.open()
@@ -259,7 +249,7 @@ Item {
         width: parent.width
         visible: screen.stateName === 'pending_payment'
         enabled: !mobile.busy
-        text: '确认支付  ¥' + (Number(screen.order.amountCents || 0) / 100).toFixed(2)
+        text: '确认支付 ¥' + (Number(screen.order.amountCents || 0) / 100).toFixed(2)
         onClicked: mobile.settle()
       }
       ActionButton {
@@ -276,31 +266,32 @@ Item {
       }
     }
   }
-
   Popup {
     id: confirmation
     property string action: 'stop'
     anchors.centerIn: Overlay.overlay
-    width: screen.width - 48
-    padding: 24
+    width: screen.width - Theme.pagePadding * 2
+    padding: Theme.cardPadding
     modal: true
     background: Rectangle {
-      color: 'white'
-      radius: 25
+      color: Theme.card
+      radius: Theme.heroRadius
     }
     Overlay.modal: Rectangle {
       color: '#75102017'
     }
     contentItem: Column {
-      spacing: 19
+      spacing: Theme.cardPadding
       AppText {
+        width: parent.width
         text: confirmation.action === 'stop' ? '结束本次充电？' : '取消本次预约？'
-        font.pixelSize: 22
-        font.weight: Font.Bold
+        font.pixelSize: Theme.titleSize
+        font.weight: Font.DemiBold
+        wrapMode: Text.WordWrap
       }
       AppText {
         width: parent.width
-        text: confirmation.action === 'stop' ? '充电结束后释放电桩，并按实际充电量生成结算金额。' : '取消后将释放电桩，本次预约不会产生费用。'
+        text: confirmation.action === 'stop' ? '充电结束后释放电桩，并按实际充电量结算。' : '取消后释放电桩，本次预约不会产生费用。'
         color: Theme.muted
         wrapMode: Text.WordWrap
         lineHeight: 1.5
@@ -319,7 +310,7 @@ Item {
       }
       ActionButton {
         width: parent.width
-        text: '继续保留'
+        text: confirmation.action === 'stop' ? '继续充电' : '保留预约'
         tone: 'quiet'
         onClicked: confirmation.close()
       }

@@ -3,27 +3,26 @@ import QtQuick 2.15
 Column {
   property string title: '这里还没有内容'
   property string description: ''
-  spacing: 14
+  spacing: Theme.cardPadding
   Rectangle {
     anchors.horizontalCenter: parent.horizontalCenter
-    width: 78
-    height: 78
-    radius: 26
+    width: 64
+    height: 64
+    radius: Theme.heroRadius
     color: Theme.primaryLight
-    Image {
+    AppIcon {
       anchors.centerIn: parent
-      source: 'qrc:/icons/zap.svg'
-      width: 32
-      height: 32
-      opacity: 0.5
+      name: 'list'
+      opacity: 0.65
     }
   }
   AppText {
     width: parent.width
     text: parent.title
-    font.pixelSize: 18
+    font.pixelSize: Theme.titleSize
     font.weight: Font.DemiBold
     horizontalAlignment: Text.AlignHCenter
+    wrapMode: Text.WordWrap
   }
   AppText {
     width: parent.width

@@ -4,63 +4,51 @@ import QtQuick.Controls 2.15
 Flickable {
   objectName: 'locationPage'
   contentWidth: width
-  contentHeight: content.height + 30
+  contentHeight: content.height + Theme.pagePadding * 2
   boundsBehavior: Flickable.StopAtBounds
   clip: true
+  ScrollBar.vertical: ScrollBar {
+    policy: ScrollBar.AsNeeded
+  }
   Column {
     id: content
-    x: 22
-    y: 12
-    width: parent.width - 44
-    spacing: 21
-    Column {
-      width: parent.width
-      spacing: 8
-      AppText {
-        text: '从哪里出发？'
-        font.pixelSize: 25
-        font.weight: Font.Bold
-      }
-      AppText {
-        width: parent.width
-        text: '选择常用区域，或输入地址定位附近电站。'
-        font.pixelSize: 12
-        color: Theme.muted
-        wrapMode: Text.WordWrap
-      }
-    }
+    x: Theme.pagePadding
+    y: Theme.pagePadding
+    width: parent.width - Theme.pagePadding * 2
+    spacing: Theme.sectionSpace
     Rectangle {
       width: parent.width
-      height: currentLocation.height + 30
-      radius: 18
+      height: currentLocation.height + Theme.cardPadding * 2
+      radius: Theme.cardRadius
       color: Theme.primaryLight
       Column {
         id: currentLocation
-        x: 16
-        y: 15
-        width: parent.width - 32
-        spacing: 8
+        x: Theme.cardPadding
+        y: Theme.cardPadding
+        width: parent.width - Theme.cardPadding * 2
+        spacing: Theme.space
         AppText {
           text: '当前位置'
-          font.pixelSize: 11
-          color: '#7d977d'
+          color: Theme.muted
+          font.pixelSize: Theme.labelSize
         }
         AppText {
-          text: mobile.locationName
           width: parent.width
-          font.weight: Font.Bold
-          wrapMode: Text.WordWrap
+          text: mobile.locationName
+          font.pixelSize: Theme.bodyLargeSize
+          font.weight: Font.Medium
           color: Theme.primary
+          wrapMode: Text.WordWrap
         }
       }
     }
     Column {
       width: parent.width
-      spacing: 12
+      spacing: Theme.cardPadding
       AppText {
-        text: '输入具体地址'
-        font.pixelSize: 15
-        font.weight: Font.Bold
+        text: '输入地址'
+        font.pixelSize: Theme.bodyLargeSize
+        font.weight: Font.Medium
       }
       AppField {
         id: address
@@ -80,25 +68,48 @@ Flickable {
     }
     Column {
       width: parent.width
-      spacing: 12
+      spacing: Theme.cardPadding
       AppText {
         text: '常用区域'
-        font.pixelSize: 17
-        font.weight: Font.Bold
+        font.pixelSize: Theme.bodyLargeSize
+        font.weight: Font.Medium
       }
       ComboBox {
         id: regionPicker
         objectName: 'locationPresetCombo'
         width: parent.width
-        height: 54
+        height: 56
         model: mobile.presets
         textRole: 'name'
         displayText: '下拉选择区域'
-        font.pixelSize: 14
+        leftPadding: Theme.cardPadding
+        rightPadding: 56
+        Accessible.name: '选择常用区域'
+        font.pixelSize: Theme.bodySize
+        contentItem: AppText {
+          text: regionPicker.displayText
+          verticalAlignment: Text.AlignVCenter
+          elide: Text.ElideRight
+        }
+        indicator: AppIcon {
+          name: 'chevron-down'
+          anchors.right: parent.right
+          anchors.rightMargin: Theme.cardPadding
+          anchors.verticalCenter: parent.verticalCenter
+        }
         background: Rectangle {
-          color: 'white'
-          radius: 14
-          border.color: Theme.border
+          color: regionPicker.down ? Theme.primaryLight : Theme.card
+          radius: Theme.cardRadius
+          border.color: regionPicker.visualFocus ? Theme.primary : Theme.border
+          border.width: regionPicker.visualFocus ? 2 : 1
+        }
+        delegate: ItemDelegate {
+          width: regionPicker.width
+          height: 48
+          text: modelData.name
+          font.pixelSize: Theme.bodySize
+          padding: Theme.cardPadding
+          highlighted: regionPicker.highlightedIndex === index
         }
         onActivated: {
           mobile.chooseLocation(currentIndex)
@@ -107,7 +118,7 @@ Flickable {
       }
       Flow {
         width: parent.width
-        spacing: 9
+        spacing: Theme.space
         Repeater {
           model: mobile.presets
           delegate: ActionButton {
@@ -115,10 +126,7 @@ Flickable {
             required property int index
             objectName: 'locationPreset_' + index
             text: modelData.name
-            width: (content.width - 9) / 2
-            height: 46
-            horizontalPadding: 7
-            font.pixelSize: 12
+            width: (content.width - Theme.space) / 2
             tone: mobile.locationName === modelData.name ? 'primary' : 'secondary'
             onClicked: {
               mobile.chooseLocation(index)
@@ -130,11 +138,11 @@ Flickable {
     }
     AppText {
       width: parent.width
-      text: '地址由腾讯位置服务解析；常用区域用于模拟当前位置。电站距离为两点直线距离，实际路线请查看导航。'
+      text: '地址由腾讯位置服务解析，区域选择用于模拟当前位置。列表显示直线距离，实际路线请查看导航。'
       color: Theme.muted
-      font.pixelSize: 11
+      font.pixelSize: Theme.labelSize
       wrapMode: Text.WordWrap
-      lineHeight: 1.6
+      lineHeight: 1.5
     }
   }
 }

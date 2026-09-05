@@ -1,28 +1,38 @@
 <RCC>
   <qresource prefix="/icons">
+    <file alias="arrow-left.svg">icons/arrow-left.svg</file>
+    <file alias="chevron-down.svg">icons/chevron-down.svg</file>
+    <file alias="chevron-right.svg">icons/chevron-right.svg</file>
+    <file alias="circle-check.svg">icons/circle-check.svg</file>
     <file alias="house.svg">icons/house.svg</file>
-    <file alias="zap.svg">icons/zap.svg</file>
-    <file alias="user.svg">icons/user.svg</file>
+    <file alias="list.svg">icons/list.svg</file>
+    <file alias="map-pin.svg">icons/map-pin.svg</file>
+    <file alias="navigation.svg">icons/navigation.svg</file>
+    <file alias="plus.svg">icons/plus.svg</file>
     <file alias="refresh-cw.svg">icons/refresh-cw.svg</file>
     <file alias="search.svg">icons/search.svg</file>
-    <file alias="navigation.svg">icons/navigation.svg</file>
-    <file alias="chevron-down.svg">icons/chevron-down.svg</file>
-    <file alias="list.svg">icons/list.svg</file>
+    <file alias="user.svg">icons/user.svg</file>
+    <file alias="x.svg">icons/x.svg</file>
+    <file alias="zap.svg">icons/zap.svg</file>
   </qresource>
-
   <qresource prefix="/qml">
     <file alias="ActionButton.qml">qml/ActionButton.qml</file>
     <file alias="AppField.qml">qml/AppField.qml</file>
+    <file alias="AppIcon.qml">qml/AppIcon.qml</file>
     <file alias="AppText.qml">qml/AppText.qml</file>
     <file alias="Badge.qml">qml/Badge.qml</file>
     <file alias="ChargingPage.qml">qml/ChargingPage.qml</file>
     <file alias="EditProfilePage.qml">qml/EditProfilePage.qml</file>
     <file alias="EmptyState.qml">qml/EmptyState.qml</file>
+    <file alias="HeroIllustration.qml">qml/HeroIllustration.qml</file>
     <file alias="HomePage.qml">qml/HomePage.qml</file>
+    <file alias="IconButton.qml">qml/IconButton.qml</file>
     <file alias="KeyValue.qml">qml/KeyValue.qml</file>
     <file alias="LocationPage.qml">qml/LocationPage.qml</file>
     <file alias="LoginPage.qml">qml/LoginPage.qml</file>
     <file alias="Main.qml">qml/Main.qml</file>
+    <file alias="MenuRow.qml">qml/MenuRow.qml</file>
+    <file alias="MoneyText.qml">qml/MoneyText.qml</file>
     <file alias="OrdersPage.qml">qml/OrdersPage.qml</file>
     <file alias="ProfilePage.qml">qml/ProfilePage.qml</file>
     <file alias="ReceiptPage.qml">qml/ReceiptPage.qml</file>
@@ -34,5 +44,7 @@
   </qresource>
   <qresource prefix="/assets">
     <file alias="brand.svg">assets/brand.svg</file>
+    <file alias="illustrations/charging-hero.svg">assets/illustrations/charging-hero.svg</file>
+    <file alias="illustrations/charging-hero.png">assets/illustrations/charging-hero.png</file>
   </qresource>
 </RCC>

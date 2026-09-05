@@ -56,14 +56,75 @@ class MobileFlowTest final : public QObject {
     QVERIFY(field->setProperty("text", value));
   }
 
+  void verifyLayout(UserMainWindow &window) {
+    auto *root = window.quickView()->rootObject();
+    auto *loader = item(window, "pageLoader");
+    QVERIFY2(loader && loader->property("status").toInt() == 1,
+             "Current QML page did not load");
+    QSet<QQuickItem *> visited;
+    std::function<void(QQuickItem *)> inspect = [&](QQuickItem *visual) {
+      if (!visual || visited.contains(visual)) return;
+      visited.insert(visual);
+      if (visual->isVisible()
+          && visual->window() == window.quickView()->quickWindow()) {
+        if (visual->metaObject()->indexOfSignal("clicked()") >= 0) {
+          QVERIFY2(visual->width() >= 48 && visual->height() >= 48,
+                   qPrintable("Touch target smaller than 48: "
+                              + visual->objectName()));
+          bool canScrollHorizontally = false;
+          for (auto *ancestor = visual->parentItem(); ancestor;
+               ancestor = ancestor->parentItem()) {
+            if (ancestor->property("contentX").isValid()
+                && ancestor->property("contentWidth").toReal()
+                     > ancestor->width() + 1) {
+              canScrollHorizontally = true;
+              break;
+            }
+          }
+          const auto topLeft = visual->mapToItem(root, QPointF());
+          QVERIFY2(canScrollHorizontally
+                     || (topLeft.x() >= -1
+                         && topLeft.x() + visual->width() <= root->width() + 1),
+                   qPrintable("Action extends beyond viewport: "
+                              + visual->objectName()));
+        }
+        if (visual->property("font").canConvert<QFont>()) {
+          const int
+            pixels = visual->property("font").value<QFont>().pixelSize();
+          QVERIFY2(pixels < 0 || pixels >= 12,
+                   "Rendered text is smaller than 12 px");
+        }
+        if (visual->objectName() == "stationPrice") {
+          qreal baseline = -1;
+          for (auto *label : visual->childItems()) {
+            if (!label->isVisible() || !label->property("text").isValid())
+              continue;
+            const qreal actual = label->mapToItem(root, QPointF()).y()
+                               + label->baselineOffset();
+            if (baseline >= 0)
+              QVERIFY2(qAbs(actual - baseline) < 1,
+                       "Price labels do not share a baseline");
+            baseline = actual;
+          }
+        }
+      }
+      for (auto *child : visual->childItems()) inspect(child);
+    };
+    inspect(root);
+  }
+
   void capture(UserMainWindow &window, const QString &name) {
-    const QString directory = qEnvironmentVariable("CHARGING_UI_ARTIFACT_DIR");
-    if (directory.isEmpty()) return;
-    QDir().mkpath(directory);
     if (auto *toast = item(window, "toastPopup"))
       QMetaObject::invokeMethod(toast, "close");
     QTest::qWait(100);
-    QVERIFY(window.grab().save(QDir(directory).filePath(name + ".png")));
+    verifyLayout(window);
+    const QString directory = qEnvironmentVariable("CHARGING_UI_ARTIFACT_DIR");
+    if (directory.isEmpty()) return;
+    const QString size = QString::number(window.width()) + 'x'
+                       + QString::number(window.height());
+    const auto destination = QDir(directory).filePath(size);
+    QDir().mkpath(destination);
+    QVERIFY(window.grab().save(QDir(destination).filePath(name + ".png")));
   }
 
 private slots:
@@ -72,11 +133,33 @@ private slots:
       QSKIP("Set CHARGING_UI_TEST_MAP=1 with a graphical display for the live "
             "Tencent map check");
     UserMainWindow window;
+    window.resize(430, 860);
     window.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&window));
     window.controller()->initialize();
     QTRY_VERIFY_WITH_TIMEOUT(window.controller()->stations().size() > 1, 10000);
-    window.controller()->openNavigation(
-      window.controller()->stations().at(1).toMap());
+    window.controller()->navigate("home");
+    const auto station = window.controller()->stations().at(1).toMap();
+    const auto buttonName = "navigateStation_" + station.value("id").toString();
+    auto *navigation = qobject_cast<QQuickItem *>(
+      item(window, qPrintable(buttonName)));
+    QVERIFY(navigation);
+    auto *feed = qobject_cast<QQuickItem *>(item(window, "homePage"));
+    QVERIFY(feed);
+    const qreal targetY = navigation->mapToItem(feed, QPointF()).y();
+    const qreal limit = feed->property("contentHeight").toReal()
+                      - feed->height();
+    feed->setProperty(
+      "contentY", qBound(0.0, targetY - feed->height() / 2, qMax(0.0, limit)));
+    QTest::qWait(100);
+    const auto center = navigation->mapToItem(
+      window.quickView()->rootObject(),
+      QPointF(navigation->width() / 2, navigation->height() / 2));
+    QTest::mouseClick(window.quickView(), Qt::LeftButton, Qt::NoModifier,
+                      center.toPoint());
+    QTRY_VERIFY(!window.quickView()->isVisible());
+    // The nested navigation button must not also activate its station card.
+    QCOMPARE(window.controller()->page(), QString("home"));
     auto *mode = window.findChild<QComboBox *>("routeMode");
     auto *route = window.findChild<QPushButton *>("routeButton");
     auto *map = window.findChild<QWebEngineView *>("tencentMapView");
@@ -92,17 +175,35 @@ private slots:
     QVERIFY(mapStatus);
     QTRY_VERIFY_WITH_TIMEOUT(mapStatus->text().startsWith("腾讯地图"), 30000);
     QTest::qWait(4000);
-    capture(window, "10-tencent-map");
+    for (const auto &size : {QSize(430, 860), QSize(360, 800)}) {
+      window.resize(size);
+      QTest::qWait(200);
+      for (auto *control :
+           {static_cast<QWidget *>(mode), static_cast<QWidget *>(route)}) {
+        QVERIFY(control->width() >= 48 && control->height() >= 48);
+        const int left = control->mapTo(&window, QPoint()).x();
+        QVERIFY(left >= 16 && left + control->width() <= window.width() - 16);
+      }
+      capture(window, "10-tencent-map");
+    }
     auto *back = window.findChild<QPushButton *>("mapBackButton");
     QVERIFY(back);
     back->click();
     QVERIFY(window.quickView()->isVisible());
   }
 
+  void completeJourney_data() {
+    QTest::addColumn<QSize>("windowSize");
+    QTest::newRow("regular-phone") << QSize(430, 860);
+    QTest::newRow("compact-phone") << QSize(360, 800);
+  }
+
   void completeJourney() {
+    QFETCH(QSize, windowSize);
     if (qEnvironmentVariableIsEmpty("CHARGING_SERVER_URL"))
       QSKIP("Set CHARGING_SERVER_URL to a disposable test service");
     UserMainWindow window;
+    window.resize(windowSize);
     window.show();
     auto *controller = window.controller();
     controller->initialize();
@@ -123,6 +224,7 @@ private slots:
     controller->selectTab("profile");
     click(window, "walletRechargeButton");
     QCOMPARE(controller->page(), QString("recharge"));
+    capture(window, "03a-recharge");
     input(window, "rechargeAmountInput", "0.01");
     click(window, "confirmRechargeButton");
     QTRY_COMPARE_WITH_TIMEOUT(
@@ -137,11 +239,15 @@ private slots:
     capture(window, "03-profile");
 
     controller->navigate("editProfile");
+    capture(window, "03b-edit-profile");
     input(window, "nicknameInput", "绿色出行测试员");
     click(window, "saveProfileButton");
     QTRY_COMPARE_WITH_TIMEOUT(controller->user().value("nickname").toString(),
                               QString("绿色出行测试员"), 10000);
     QTRY_COMPARE(controller->page(), QString("profile"));
+    controller->navigate("location");
+    capture(window, "03c-location");
+    controller->back();
     controller->selectTab("home");
     QTRY_VERIFY(!controller->loadingStations());
     int stationId = 0;
@@ -200,6 +306,7 @@ private slots:
     // A new client process/session must recover and intercept an unfinished
     // order.
     UserMainWindow recovery;
+    recovery.resize(windowSize);
     recovery.show();
     recovery.controller()->initialize();
     QSignalSpy unfinished(recovery.controller(),
@@ -208,6 +315,7 @@ private slots:
     click(recovery, "loginButton");
     QTRY_VERIFY_WITH_TIMEOUT(unfinished.count() == 1, 10000);
     QTRY_COMPARE(recovery.controller()->page(), QString("settlement"));
+    capture(recovery, "06a-unfinished-order");
     click(recovery, "unfinishedOrderContinue");
     click(recovery, "stopChargingButton");
     click(recovery, "confirmOrderActionButton");

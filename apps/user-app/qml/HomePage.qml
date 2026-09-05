@@ -1,11 +1,12 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
 
 Flickable {
   id: screen
   objectName: 'homePage'
   contentWidth: width
-  contentHeight: content.height + 28
+  contentHeight: content.height + Theme.pagePadding * 2
   clip: true
   boundsBehavior: Flickable.StopAtBounds
   property var suggestion: {
@@ -17,48 +18,47 @@ Flickable {
   ScrollBar.vertical: ScrollBar {
     policy: ScrollBar.AsNeeded
   }
-
   Column {
     id: content
-    x: 22
-    y: 8
-    width: parent.width - 44
-    spacing: 18
-    Rectangle {
+    x: Theme.pagePadding
+    y: Theme.pagePadding
+    width: parent.width - Theme.pagePadding * 2
+    spacing: Theme.cardPadding
+    Button {
+      id: locationButton
+      objectName: 'chooseLocationButton'
       width: parent.width
-      height: 46
-      radius: 14
-      color: Theme.primaryLight
-      Row {
-        x: 14
-        anchors.verticalCenter: parent.verticalCenter
-        spacing: 8
-        Image {
-          width: 17
-          height: 17
-          y: 1
-          source: 'qrc:/icons/navigation.svg'
-        }
-        AppText {
-          width: content.width - 78
-          text: mobile.locationName
-          font.pixelSize: 13
-          elide: Text.ElideRight
-          color: Theme.primary
-        }
-        AppText {
-          text: '⌄'
-          color: Theme.primary
-          font.pixelSize: 16
-        }
+      height: 56
+      padding: Theme.cardPadding
+      Accessible.name: '当前位置：' + mobile.locationName + '，选择位置'
+      onClicked: mobile.navigate('location')
+      background: Rectangle {
+        radius: Theme.cardRadius
+        color: locationButton.down ? '#d3e3d6' : Theme.primaryLight
+        border.color: Theme.primary
+        border.width: locationButton.visualFocus ? 2 : 0
       }
-      MouseArea {
-        objectName: 'chooseLocationButton'
-        anchors.fill: parent
-        onClicked: mobile.navigate('location')
+      contentItem: RowLayout {
+        spacing: Theme.controlGap
+        AppIcon {
+          name: 'map-pin'
+          Layout.preferredWidth: 24
+          Layout.preferredHeight: 24
+        }
+        AppText {
+          Layout.fillWidth: true
+          text: mobile.locationName
+          color: Theme.primary
+          font.pixelSize: Theme.bodySize
+          elide: Text.ElideRight
+        }
+        AppIcon {
+          name: 'chevron-down'
+          Layout.preferredWidth: 24
+          Layout.preferredHeight: 24
+        }
       }
     }
-
     AppField {
       id: search
       objectName: 'stationSearchInput'
@@ -80,130 +80,94 @@ Flickable {
         onTriggered: mobile.refreshStations()
       }
     }
-
-    Rectangle {
+    Button {
+      id: activeBanner
+      objectName: 'activeOrderBanner'
       width: parent.width
-      height: activeInfo.height + 32
+      implicitHeight: activeInfo.implicitHeight + Theme.cardPadding * 2
       visible: Number(mobile.activeOrder.id || 0) > 0
-      radius: 17
-      color: '#f0eddc'
-      border.color: '#e8dfba'
-      Column {
-        id: activeInfo
-        x: 16
-        y: 16
-        width: parent.width - 42
-        spacing: 6
-        AppText {
-          text: '你有一笔' + mobile.statusLabel(mobile.activeOrder.status || '') + '订单'
-          font.weight: Font.Bold
-          color: '#796230'
-        }
-        AppText {
-          text: mobile.activeOrder.stationName || ''
-          width: parent.width
-          elide: Text.ElideRight
-          color: '#9d8658'
-          font.pixelSize: 12
-        }
+      padding: Theme.cardPadding
+      Accessible.name: '处理' + mobile.statusLabel(mobile.activeOrder.status || '') + '订单'
+      onClicked: mobile.openActiveOrder()
+      background: Rectangle {
+        radius: Theme.cardRadius
+        color: activeBanner.down ? '#e7dfbd' : '#f0eddc'
+        border.color: '#e0d4a8'
+        border.width: activeBanner.visualFocus ? 2 : 1
       }
-      AppText {
-        anchors.right: parent.right
-        anchors.rightMargin: 16
-        anchors.verticalCenter: parent.verticalCenter
-        text: '›'
-        font.pixelSize: 25
-        color: '#796230'
-      }
-      MouseArea {
-        anchors.fill: parent
-        objectName: 'activeOrderBanner'
-        onClicked: mobile.openActiveOrder()
-      }
-    }
-
-    Rectangle {
-      width: parent.width
-      height: 126
-      radius: 23
-      color: Theme.primary
-      clip: true
-      Rectangle {
-        x: parent.width - 117
-        y: 13
-        width: 100
-        height: 100
-        radius: 50
-        color: '#326d50'
-      }
-      Rectangle {
-        x: parent.width - 91
-        y: 37
-        width: 67
-        height: 67
-        radius: 34
-        color: '#418262'
-      }
-      Column {
-        x: 22
-        y: 23
-        spacing: 9
-        AppText {
-          text: '好电站，近一点'
-          color: 'white'
-          font.pixelSize: 23
-          font.weight: Font.Bold
-        }
-        AppText {
-          text: '实时空闲 · 透明电价 · 便捷预约'
-          color: '#c5d9c9'
-          font.pixelSize: 11
-        }
-        Row {
-          spacing: 5
-          Rectangle {
-            width: 5
-            height: 5
-            radius: 3
-            color: Theme.accent
-            y: 5
+      contentItem: RowLayout {
+        spacing: Theme.space
+        Column {
+          id: activeInfo
+          Layout.fillWidth: true
+          spacing: Theme.microSpace
+          AppText {
+            text: '待处理：' + mobile.statusLabel(mobile.activeOrder.status || '') + '订单'
+            font.weight: Font.Medium
+            color: '#796230'
           }
           AppText {
-            text: '已找到 ' + mobile.stations.length + ' 座电站'
-            color: Theme.accent
-            font.pixelSize: 11
+            text: mobile.activeOrder.stationName || ''
+            width: parent.width
+            elide: Text.ElideRight
+            font.pixelSize: Theme.labelSize
+            color: '#796230'
           }
         }
-      }
-      AppText {
-        anchors.right: parent.right
-        anchors.rightMargin: 27
-        y: 34
-        text: 'ϟ'
-        font.pixelSize: 63
-        font.weight: Font.Bold
-        color: Theme.accent
-        rotation: 12
+        AppIcon {
+          name: 'chevron-right'
+          Layout.preferredWidth: 24
+          Layout.preferredHeight: 24
+        }
       }
     }
-
+    Rectangle {
+      width: parent.width
+      height: 160
+      radius: Theme.heroRadius
+      color: Theme.primary
+      RowLayout {
+        anchors.fill: parent
+        anchors.margins: Theme.cardPadding
+        spacing: Theme.space
+        Column {
+          Layout.fillWidth: true
+          spacing: Theme.space
+          AppText {
+            width: parent.width
+            text: '好电站，近一点'
+            color: 'white'
+            font.pixelSize: Theme.titleSize
+            font.weight: Font.DemiBold
+            wrapMode: Text.WordWrap
+          }
+          AppText {
+            text: '附近 ' + mobile.stations.length + ' 座电站'
+            color: '#d2e2d5'
+            font.pixelSize: Theme.labelSize
+          }
+        }
+        HeroIllustration {
+          Layout.preferredWidth: screen.width < 400 ? 128 : 152
+          Layout.fillHeight: true
+        }
+      }
+    }
     Column {
       width: parent.width
-      spacing: 10
+      spacing: Theme.cardPadding
       visible: screen.suggestion !== null
-      Item {
+      RowLayout {
         width: parent.width
-        height: 25
         AppText {
+          Layout.fillWidth: true
           text: '为你推荐'
-          font.pixelSize: 17
-          font.weight: Font.Bold
+          font.pixelSize: Theme.bodyLargeSize
+          font.weight: Font.Medium
         }
         AppText {
-          anchors.right: parent.right
-          anchors.verticalCenter: parent.verticalCenter
-          text: '根据未来空闲预测'
-          font.pixelSize: 10
+          text: '根据空闲预测'
+          font.pixelSize: Theme.labelSize
           color: Theme.muted
         }
       }
@@ -213,29 +177,29 @@ Flickable {
         highlighted: true
       }
     }
-
     Column {
       width: parent.width
-      spacing: 12
-      Item {
+      spacing: Theme.space
+      RowLayout {
         width: parent.width
-        height: 26
         AppText {
+          Layout.fillWidth: true
           text: '附近电站'
-          font.pixelSize: 18
-          font.weight: Font.Bold
+          font.pixelSize: Theme.bodyLargeSize
+          font.weight: Font.Medium
         }
-        AppText {
-          anchors.right: parent.right
-          y: 4
-          text: mobile.loadingStations ? '正在更新…' : mobile.stations.length + ' 座可选'
-          font.pixelSize: 11
-          color: Theme.muted
+        ActionButton {
+          objectName: 'fastOnlyButton'
+          Layout.preferredWidth: 88
+          text: '仅快充'
+          horizontalPadding: Theme.space
+          tone: mobile.fastOnly ? 'primary' : 'secondary'
+          onClicked: mobile.fastOnly = !mobile.fastOnly
         }
       }
       Row {
         width: parent.width
-        spacing: 6
+        spacing: Theme.space
         Repeater {
           model: [{
               "key": 'distance',
@@ -250,28 +214,15 @@ Flickable {
           delegate: ActionButton {
             required property var modelData
             objectName: 'sort_' + modelData.key
-            width: (content.width - 78 - 18) / 3
-            height: 35
-            font.pixelSize: 11
-            horizontalPadding: 4
+            width: (content.width - Theme.space * 2) / 3
             text: modelData.text
+            horizontalPadding: Theme.space
             tone: mobile.sort === modelData.key ? 'primary' : 'secondary'
             onClicked: mobile.sort = modelData.key
           }
         }
-        ActionButton {
-          objectName: 'fastOnlyButton'
-          width: 78
-          height: 35
-          text: '仅快充'
-          font.pixelSize: 11
-          horizontalPadding: 4
-          tone: mobile.fastOnly ? 'primary' : 'secondary'
-          onClicked: mobile.fastOnly = !mobile.fastOnly
-        }
       }
     }
-
     Repeater {
       model: mobile.stations
       delegate: StationCard {
@@ -283,8 +234,8 @@ Flickable {
     EmptyState {
       width: parent.width
       visible: mobile.stations.length === 0 && !mobile.loadingStations
-      title: mobile.online ? '暂时没有找到电站' : '连接后即可发现电站'
-      description: mobile.online ? '试试更换位置，或清除关键词和快充筛选。' : '请确认充电服务已启动，然后点击右上角刷新。'
+      title: mobile.online ? '没有找到电站' : '暂时无法加载电站'
+      description: mobile.online ? '试试更换位置，或清除关键词与筛选。' : '请检查服务连接后重试。'
     }
   }
 }

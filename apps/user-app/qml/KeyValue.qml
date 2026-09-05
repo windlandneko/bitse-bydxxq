@@ -1,24 +1,24 @@
 import QtQuick 2.15
+import QtQuick.Layouts 1.15
 
-Item {
+RowLayout {
   property string label: ''
   property string value: ''
   property color valueColor: Theme.ink
-  implicitHeight: Math.max(name.implicitHeight, content.implicitHeight)
+  spacing: Theme.space
   AppText {
-    id: name
-    width: parent.width * 0.3
+    Layout.preferredWidth: 72
+    Layout.alignment: Qt.AlignTop
     text: parent.label
-    font.pixelSize: 13
     color: Theme.muted
+    font.pixelSize: Theme.bodySize
   }
   AppText {
-    id: content
-    anchors.right: parent.right
-    width: parent.width * 0.68
+    Layout.fillWidth: true
+    Layout.alignment: Qt.AlignTop
     text: parent.value
-    font.pixelSize: 13
     color: parent.valueColor
+    font.pixelSize: Theme.bodySize
     horizontalAlignment: Text.AlignRight
     wrapMode: Text.WrapAnywhere
   }

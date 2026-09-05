@@ -2,10 +2,10 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { Station } from '../types/dashboard'
 import { init, type ChartInstance } from '../lib/echarts'
-const props = defineProps<{ stations: Station[] }>()
-const selectedId = ref<number>()
+const props = defineProps<{ stations: Station[]; modelValue?: number }>()
+const emit = defineEmits<{ 'update:modelValue': [id: number] }>()
 const selected = computed(
-  () => props.stations.find((s) => s.id === selectedId.value) ?? props.stations[0],
+  () => props.stations.find((s) => s.id === props.modelValue) ?? props.stations[0],
 )
 const element = ref<HTMLDivElement>()
 let chart: ChartInstance | undefined
@@ -15,7 +15,8 @@ function render() {
   if (!chart) {
     chart = init(element.value)
     chart.on('click', (params: any) => {
-      selectedId.value = params.data?.stationId
+      if (typeof params.data?.stationId === 'number')
+        emit('update:modelValue', params.data.stationId)
     })
   }
   const values = props.stations.filter(
@@ -82,7 +83,11 @@ function render() {
             name: s.name,
             stationId: s.id,
             value: [s.longitude, s.latitude, s.totalChargers],
-            itemStyle: { color: s.idleChargers > 0 ? '#3be4d5' : '#ffbd65' },
+            itemStyle: {
+              color: s.idleChargers > 0 ? '#3be4d5' : '#ffbd65',
+              borderColor: selected.value?.id === s.id ? '#dcfff8' : 'transparent',
+              borderWidth: 2,
+            },
           })),
         },
       ],
@@ -97,6 +102,7 @@ onMounted(async () => {
   if (element.value) observer.observe(element.value)
 })
 watch(() => props.stations, render, { deep: true })
+watch(() => props.modelValue, render)
 onBeforeUnmount(() => {
   observer?.disconnect()
   chart?.dispose()
@@ -104,7 +110,7 @@ onBeforeUnmount(() => {
 </script>
 <template>
   <div class="station-map">
-    <div class="map-heading"><span>区域充电网络</span><small>经纬度示意 · 无道路底图</small></div>
+    <div class="map-heading"><span>区域充电网络</span><small>站点分布</small></div>
     <div class="map-sweep" aria-hidden="true" />
     <div ref="element" class="map-chart" />
     <div v-if="!stations.length" class="map-empty">等待站点数据</div>
@@ -128,7 +134,8 @@ onBeforeUnmount(() => {
         v-for="station in stations"
         :key="station.id"
         :class="{ selected: selected?.id === station.id }"
-        @click="selectedId = station.id"
+        :aria-pressed="selected?.id === station.id"
+        @click="emit('update:modelValue', station.id)"
       >
         {{ station.name }}
       </button>
