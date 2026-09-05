@@ -28,7 +28,7 @@ Flickable {
         width: parent.width - Theme.cardPadding * 2
         spacing: Theme.space
         AppText {
-          text: '当前钱包余额'
+          text: '钱包余额'
           color: '#d2e2d5'
         }
         MoneyText {
@@ -76,7 +76,7 @@ Flickable {
         objectName: 'rechargeAmountInput'
         width: parent.width
         text: '50'
-        placeholderText: '0.01 — 10,000.00'
+        placeholderText: '0.01 至 10,000.00'
         Accessible.name: '自定义充值金额，单位元'
         inputMethodHints: Qt.ImhFormattedNumbersOnly
         maximumLength: 8
@@ -84,11 +84,6 @@ Flickable {
           regularExpression: /[0-9]{0,5}(\.[0-9]{0,2})?/
         }
         onAccepted: mobile.recharge(text)
-      }
-      AppText {
-        text: '到账后余额实时更新'
-        color: Theme.muted
-        font.pixelSize: Theme.labelSize
       }
     }
     ActionButton {
@@ -108,7 +103,7 @@ Flickable {
         x: Theme.cardPadding
         y: Theme.cardPadding
         width: parent.width - Theme.cardPadding * 2
-        text: '课程演示的模拟充值，不会产生真实扣款。余额可用于预约和支付充电订单。'
+        text: '模拟充值，不会实际扣款。'
         color: Theme.muted
         wrapMode: Text.WordWrap
         lineHeight: 1.5

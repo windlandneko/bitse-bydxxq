@@ -1,7 +1,44 @@
 #include "AdminUi.h"
 #include "AdminWindowState.h"
 
+#include <QComboBox>
+#include <QDateTime>
+#include <QLabel>
+#include <QPushButton>
+#include <QStatusBar>
+#include <QTabWidget>
+#include <QTableWidget>
+#include <QTimer>
+#include <QVBoxLayout>
+#include <algorithm>
+
 using namespace adminui;
+
+namespace {
+constexpr auto runningMessage = "预测任务运行中，完成后自动刷新。";
+
+QJsonObject horizon(const QJsonArray &hours, int hour) {
+  for (const auto &value : hours) {
+    const auto item = value.toObject();
+    if (item["hour"].toInt() == hour) return item;
+  }
+  return {};
+}
+
+QString peaks(const QJsonArray &hours) {
+  QStringList periods;
+  for (const auto &value : hours) {
+    const auto item = value.toObject();
+    if (!item["isPeak"].toBool()) continue;
+    const auto dateTime = QDateTime::fromString(item["time"].toString(),
+                                                Qt::ISODate);
+    periods << (dateTime.isValid()
+                  ? dateTime.toLocalTime().toString("MM-dd HH:mm")
+                  : QString("+%1h").arg(item["hour"].toInt()));
+  }
+  return periods.isEmpty() ? "无高峰预警" : periods.join("、");
+}
+} // namespace
 
 void AdminMainWindow::Impl::buildForecasts() {
   QVBoxLayout *layout;
@@ -36,8 +73,8 @@ void AdminMainWindow::Impl::buildForecasts() {
   tabs->addTab(stationForecasts, "站级负荷与空闲电桩");
   tabs->addTab(chargerForecasts, "桩级负荷");
   layout->addWidget(tabs, 1);
-  layout->addWidget(new QLabel("预测为运营参考；高峰时段请提前检查设备、安排值"
-                               "守。时间按当前计算机时区显示。"));
+  layout->addWidget(
+    new QLabel("高峰时段请提前安排电力调配与运维值守。时间按本机时区显示。"));
   QObject::connect(forecastStation,
                    qOverload<int>(&QComboBox::currentIndexChanged), w, [this] {
                      if (loggedIn) refreshForecasts(false);
@@ -52,37 +89,16 @@ void AdminMainWindow::Impl::buildForecasts() {
       [this](QJsonValue) {
         forecastRequestPending = false;
         forecastRunning = true;
-        forecastState->setText(
-          "预测任务正在后台运行，完成后将自动刷新。可继续管理其他业务。");
+        forecastState->setText(runningMessage);
         forecastPoll->start();
       },
       true,
       [this] {
         forecastRequestPending = false;
         runForecast->setEnabled(!forecastRunning);
-        forecastState->setText("提交失败，可检查服务连接后重试。");
+        forecastState->setText("提交失败，请重试。");
       });
   });
-}
-
-QJsonObject AdminMainWindow::Impl::horizon(const QJsonArray &hours, int hour) {
-  for (const auto &value : hours) {
-    if (value.toObject()["hour"].toInt() == hour) return value.toObject();
-  }
-  return {};
-}
-
-QString AdminMainWindow::Impl::peaks(const QJsonArray &hours) {
-  QStringList periods;
-  for (const auto &value : hours) {
-    const auto item = value.toObject();
-    if (!item["isPeak"].toBool()) continue;
-    auto dateTime = QDateTime::fromString(item["time"].toString(), Qt::ISODate);
-    periods << (dateTime.isValid()
-                  ? dateTime.toLocalTime().toString("MM-dd HH:mm")
-                  : QString("+%1h").arg(item["hour"].toInt()));
-  }
-  return periods.isEmpty() ? "无高峰预警" : periods.join("、");
 }
 
 void AdminMainWindow::Impl::refreshForecasts(bool interactive) {
@@ -95,8 +111,7 @@ void AdminMainWindow::Impl::refreshForecasts(bool interactive) {
       const auto output = data.toObject();
       const auto stations = output["stations"].toArray();
       if (stations.isEmpty()) {
-        forecastMeta->setText(
-          "当前没有预测结果。点击“更新未来 24 小时预测”生成站级与桩级预测。");
+        forecastMeta->setText("暂无预测结果，点击“更新未来 24 小时预测”生成。");
       } else {
         forecastMeta->setText(QString("生成时间：%1\n模型：%2 · 数据来源：%3")
                                 .arg(timeText(output["generatedAt"]),
@@ -143,11 +158,11 @@ void AdminMainWindow::Impl::refreshForecasts(bool interactive) {
                      number(horizon(hours, 24)["loadKw"], 2),
                      peaks(hours)};
            });
-      forecastWarnings->setText(QString("当前展示 %1 个电站、%2 个电桩；未来 "
-                                        "24 小时有 %3 个电站出现高峰预警。")
-                                  .arg(stationRows.size())
-                                  .arg(chargerRows.size())
-                                  .arg(warningStations));
+      forecastWarnings->setText(
+        QString("%1 个电站 · %2 个电桩 · 未来 24 小时高峰预警：%3 站")
+          .arg(stationRows.size())
+          .arg(chargerRows.size())
+          .arg(warningStations));
     },
     interactive);
 }
@@ -161,27 +176,25 @@ void AdminMainWindow::Impl::refreshForecastStatus(bool interactive) {
       forecastRunning = status["running"].toBool();
       runForecast->setEnabled(!forecastRunning && !forecastRequestPending);
       if (forecastRunning) {
-        forecastState->setText(
-          "预测任务正在后台运行，完成后自动刷新。可继续操作其他页面。");
+        forecastState->setText(runningMessage);
         if (!forecastPoll->isActive()) forecastPoll->start();
+        return;
+      }
+      forecastPoll->stop();
+      const auto lastError = status["lastError"].toString();
+      if (!lastError.isEmpty()) {
+        forecastState->setText("预测失败：" + lastError);
+      } else if (status["lastRunAt"].toString().isEmpty()) {
+        forecastState->setText("尚未运行预测任务");
       } else {
-        forecastPoll->stop();
-        const auto lastError = status["lastError"].toString();
-        if (!lastError.isEmpty()) {
-          forecastState->setText("最近一次预测任务失败：" + lastError);
-        } else {
-          forecastState->setText(status["lastRunAt"].toString().isEmpty()
-                                   ? "尚未运行预测任务"
-                                   : "最近任务完成时间："
-                                       + timeText(status["lastRunAt"]));
-        }
-        if (wasRunning) {
-          refreshForecasts(false);
-          w->statusBar()->showMessage(lastError.isEmpty()
-                                        ? "负荷预测已更新"
-                                        : "预测任务失败，请查看预测页面",
-                                      10000);
-        }
+        forecastState->setText("上次完成：" + timeText(status["lastRunAt"]));
+      }
+      if (wasRunning) {
+        refreshForecasts(false);
+        w->statusBar()->showMessage(lastError.isEmpty()
+                                      ? "负荷预测已更新"
+                                      : "预测任务失败，请查看预测页面",
+                                    10000);
       }
     },
     interactive);

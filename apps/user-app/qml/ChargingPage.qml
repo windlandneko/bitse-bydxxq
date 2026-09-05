@@ -1,6 +1,5 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
 
 Item {
   id: screen
@@ -29,7 +28,13 @@ Item {
         spacing: Theme.space
         AppText {
           width: parent.width
-          text: screen.stateName === 'reserved' ? '电桩已为你预留' : screen.stateName === 'charging' ? '正在充电' : '本次充电已结束'
+          text: {
+            if (screen.stateName === 'reserved')
+              return '已预约'
+            if (screen.stateName === 'charging')
+              return '正在充电'
+            return '充电已结束'
+          }
           font.pixelSize: Theme.titleSize
           font.weight: Font.DemiBold
           horizontalAlignment: Text.AlignHCenter
@@ -86,7 +91,8 @@ Item {
           }
           AppText {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: screen.stateName === 'reserved' ? (mobile.clockMs > 0 ? mobile.reservationRemaining() : '') : Math.round(screen.stateOfCharge) + '%'
+            objectName: 'reservationCountdown'
+            text: screen.stateName === 'reserved' ? mobile.reservationRemaining : Math.round(screen.stateOfCharge) + '%'
             color: Theme.primary
             font.pixelSize: 40
             font.weight: Font.DemiBold
@@ -198,7 +204,13 @@ Item {
           x: Theme.cardPadding
           y: Theme.cardPadding
           width: parent.width - Theme.cardPadding * 2
-          text: screen.stateName === 'reserved' ? '请在保留时间内连接车辆并开始充电，超时会自动取消预约。' : screen.stateName === 'charging' ? '退出应用后仍会计费；充满电或余额用尽时自动结束。' : (screen.order.stopReason ? screen.order.stopReason + '。' : '') + '确认后将从钱包余额扣除费用。'
+          text: {
+            if (screen.stateName === 'reserved')
+              return '请在倒计时结束前开始充电，超时自动取消。'
+            if (screen.stateName === 'charging')
+              return '退出后仍计费，充满或余额用尽时自动结束。'
+            return (screen.order.stopReason ? screen.order.stopReason + '。' : '') + '确认后从钱包扣款。'
+          }
           font.pixelSize: Theme.bodySize
           color: '#666b3f'
           wrapMode: Text.WordWrap
@@ -291,7 +303,7 @@ Item {
       }
       AppText {
         width: parent.width
-        text: confirmation.action === 'stop' ? '充电结束后释放电桩，并按实际充电量结算。' : '取消后释放电桩，本次预约不会产生费用。'
+        text: confirmation.action === 'stop' ? '按已充电量结算。' : '取消预约不收费。'
         color: Theme.muted
         wrapMode: Text.WordWrap
         lineHeight: 1.5

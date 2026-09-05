@@ -1,46 +1,24 @@
 #pragma once
 
 #include "AdminMainWindow.h"
-#include "ApiClient.h"
 
-#include <QAbstractButton>
-#include <QButtonGroup>
-#include <QChart>
-#include <QChartView>
-#include <QCheckBox>
-#include <QComboBox>
-#include <QDateTime>
-#include <QDateTimeAxis>
-#include <QDesktopServices>
-#include <QDialog>
-#include <QDialogButtonBox>
-#include <QDoubleSpinBox>
-#include <QFormLayout>
-#include <QGroupBox>
-#include <QHeaderView>
+#include <QHash>
 #include <QJsonArray>
 #include <QJsonObject>
-#include <QLabel>
-#include <QLineEdit>
-#include <QLineSeries>
-#include <QMessageBox>
-#include <QPointer>
-#include <QPushButton>
-#include <QScrollArea>
-#include <QSignalBlocker>
-#include <QSpinBox>
-#include <QSplitter>
-#include <QStackedWidget>
-#include <QStatusBar>
-#include <QTabWidget>
-#include <QTableWidget>
-#include <QTimer>
-#include <QUrl>
-#include <QVBoxLayout>
-#include <QValueAxis>
-#include <algorithm>
-#include <cmath>
 #include <functional>
+
+class ApiClient;
+class QChartView;
+class QCheckBox;
+class QComboBox;
+class QHBoxLayout;
+class QLabel;
+class QLineEdit;
+class QPushButton;
+class QStackedWidget;
+class QTableWidget;
+class QTimer;
+class QVBoxLayout;
 
 class AdminMainWindow::Impl {
 public:
@@ -52,7 +30,7 @@ public:
             const std::function<void(QJsonValue)> &success, bool interactive);
   void buildLogin();
   void buildWorkspace();
-  QWidget *page(const QString &title, QVBoxLayout **layout);
+  void page(const QString &title, QVBoxLayout **layout);
   QLabel *metric(const QString &title, QHBoxLayout *row);
   void buildOverview();
   void refreshOverview(bool interactive);
@@ -71,8 +49,6 @@ public:
   void buildOrders();
   void refreshOrders(bool interactive);
   void buildForecasts();
-  static QJsonObject horizon(const QJsonArray &hours, int hour);
-  static QString peaks(const QJsonArray &hours);
   void refreshForecasts(bool interactive);
   void refreshForecastStatus(bool interactive);
   void buildLogs();

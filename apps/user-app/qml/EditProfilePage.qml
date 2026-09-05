@@ -72,14 +72,9 @@ Flickable {
         width: parent.width
         Component.onCompleted: text = mobile.user.nickname || ''
         maximumLength: 24
-        placeholderText: '请输入昵称'
+        placeholderText: '1 至 24 个字符'
         Accessible.name: '昵称'
         onAccepted: mobile.updateNickname(text)
-      }
-      AppText {
-        text: '1 至 24 个字符'
-        font.pixelSize: Theme.labelSize
-        color: Theme.muted
       }
     }
     Column {
@@ -96,11 +91,6 @@ Flickable {
         readOnly: true
         color: Theme.muted
         Accessible.name: '登录手机号，不可修改'
-      }
-      AppText {
-        text: '手机号用于登录，暂不支持修改'
-        font.pixelSize: Theme.labelSize
-        color: Theme.muted
       }
     }
     ActionButton {

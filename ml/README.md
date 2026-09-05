@@ -1,7 +1,7 @@
 # 负荷预测与公开数据回测
 
-当前模块只有两个正式入口，均从仓库根目录运行。Python 不打开业务 SQLite；
-C++ 服务收集历史并调用子进程，再验证结果并统一保存。
+模块提供业务预测与公开数据回测两个入口，均从仓库根目录运行。
+C++服务通过JSON交换预测输入和结果，并负责数据库读写。
 
 ```sh
 uv sync --project ml --frozen
@@ -11,9 +11,8 @@ uv run --project ml pytest ml/tests -q
 uv run --project ml ruff check ml
 ```
 
-通常无需手写 JSON：管理端“负荷预测”运行预测任务即可；后台启动命令和 JSON 合同
-见 `docs/接口契约.md`。`train` / `evaluate` 为 `backtest` 的兼容别名，`predict` 为
-`service` 的兼容别名；旧 `--db` 选项与混合合成历史的旧管线已移除。
+管理端“负荷预测”可运行预测任务；后台启动命令和JSON字段见
+`docs/接口契约.md`。
 
 业务预测：
 
@@ -28,8 +27,8 @@ uv run --project ml ruff check ml
 - 特征包含历史负荷、充电时段、星期/年周期和中国法定节假日/调休。
   可选输入 `weather:[{stationId,date:'YYYY-MM-DD',temperatureC,precipitationMm}]` 提供
   历史日天气；仅使用原点前一个已经结束的自然日，不使用未来实测天气。当前业务服务
-  未配置天气源时明确标记缺失，不随机编造天气。
-- 源标签明确为“课程演示业务数据”，给出模型/基线、历史截止和天气来源。
+  未配置天气源时按缺失值处理。
+- 来源标记为“模拟业务数据”，附模型/基线、历史截止和天气来源。
   预测是小时平均负荷估计，不能等同于桩的瞬时遥测。模拟充电的时间倍率也会随结果记录。
 
 公开数据回测：
@@ -47,9 +46,8 @@ uv run --project ml python -m ml.backtest \
 和法定日历。保留均匀分摊前后的总电量审计，使用 MAE/RMSE/WAPE 与上周同期基线比较。
 
 生成 `report.json`、`report.md`、`models.pkl` 到已忽略的 artifacts 目录。
-可提交的本次完整回测报告在 `reports/jiaxing/`。报告如实保留模型不及基线的结果，
-不把公开历史站点模型用于名称、规模与时间均不同的课程业务站点。
-模型超参数固定、没有在测试集选模型或调整参数，公开回测不等同于当前业务精度保证。
+回测报告位于 `reports/jiaxing/`，当前随机森林误差高于周周期基线。
+模型超参数固定，评估范围为嘉兴公开数据；业务站点使用自身历史单独训练。
 
 中国日历来自 [chinese-calendar](https://github.com/liriansu-opus/chinese-calendar)，
 当前锁定版本覆盖 2004–2026；超出年份会回退周末特征并标记日历未知，更新数据依赖后

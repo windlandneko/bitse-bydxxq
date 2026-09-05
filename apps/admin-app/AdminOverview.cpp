@@ -1,6 +1,19 @@
 #include "AdminUi.h"
 #include "AdminWindowState.h"
 
+#include <QChart>
+#include <QChartView>
+#include <QComboBox>
+#include <QDateTime>
+#include <QDateTimeAxis>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLineSeries>
+#include <QSplitter>
+#include <QTableWidget>
+#include <QVBoxLayout>
+#include <QValueAxis>
+
 using namespace adminui;
 
 void AdminMainWindow::Impl::buildOverview() {

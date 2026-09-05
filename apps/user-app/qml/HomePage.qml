@@ -60,7 +60,6 @@ Flickable {
       }
     }
     AppField {
-      id: search
       objectName: 'stationSearchInput'
       width: parent.width
       placeholderText: '搜索电站名称 / 地址'
@@ -135,7 +134,7 @@ Flickable {
           spacing: Theme.space
           AppText {
             width: parent.width
-            text: '好电站，近一点'
+            text: '附近充电站'
             color: 'white'
             font.pixelSize: Theme.titleSize
             font.weight: Font.DemiBold
@@ -157,19 +156,10 @@ Flickable {
       width: parent.width
       spacing: Theme.cardPadding
       visible: screen.suggestion !== null
-      RowLayout {
-        width: parent.width
-        AppText {
-          Layout.fillWidth: true
-          text: '为你推荐'
-          font.pixelSize: Theme.bodyLargeSize
-          font.weight: Font.Medium
-        }
-        AppText {
-          text: '根据空闲预测'
-          font.pixelSize: Theme.labelSize
-          color: Theme.muted
-        }
+      AppText {
+        text: '推荐电站'
+        font.pixelSize: Theme.bodyLargeSize
+        font.weight: Font.Medium
       }
       StationCard {
         width: parent.width
@@ -235,7 +225,7 @@ Flickable {
       width: parent.width
       visible: mobile.stations.length === 0 && !mobile.loadingStations
       title: mobile.online ? '没有找到电站' : '暂时无法加载电站'
-      description: mobile.online ? '试试更换位置，或清除关键词与筛选。' : '请检查服务连接后重试。'
+      description: mobile.online ? '更换位置或清除筛选后重试。' : '检查连接后重试。'
     }
   }
 }

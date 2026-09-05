@@ -41,17 +41,12 @@ Flickable {
         width: parent.width - Theme.cardPadding * 2
         spacing: Theme.space
         AppText {
-          text: '每一程，都电力满满'
+          text: '查找附近充电站'
           width: parent.width
           wrapMode: Text.WordWrap
           font.pixelSize: Theme.headlineSize
           font.weight: Font.DemiBold
           color: 'white'
-        }
-        AppText {
-          text: '附近找桩，轻松补能'
-          color: '#d2e2d5'
-          font.pixelSize: Theme.bodySize
         }
       }
       HeroIllustration {
@@ -72,7 +67,7 @@ Flickable {
       }
       AppText {
         width: parent.width
-        text: '首次登录将自动创建账号'
+        text: '首次登录自动注册'
         color: Theme.muted
         wrapMode: Text.WordWrap
       }
@@ -99,13 +94,6 @@ Flickable {
         text: mobile.busy ? '正在登录…' : '登录 / 注册'
         enabled: !mobile.busy
         onClicked: mobile.login(phone.text)
-      }
-      AppText {
-        width: parent.width
-        text: '免密登录 · 模拟充值'
-        color: Theme.muted
-        font.pixelSize: Theme.labelSize
-        horizontalAlignment: Text.AlignHCenter
       }
     }
   }

@@ -23,7 +23,6 @@ class MobileController final : public QObject {
   Q_PROPERTY(QVariantMap viewedOrder READ viewedOrder NOTIFY viewedOrderChanged)
   Q_PROPERTY(QVariantList presets READ presets NOTIFY locationChanged)
   Q_PROPERTY(QString locationName READ locationName NOTIFY locationChanged)
-  Q_PROPERTY(bool hasLocation READ hasLocation NOTIFY locationChanged)
   Q_PROPERTY(QString query READ query WRITE setQuery NOTIFY filtersChanged)
   Q_PROPERTY(QString sort READ sort WRITE setSort NOTIFY filtersChanged)
   Q_PROPERTY(
@@ -33,7 +32,8 @@ class MobileController final : public QObject {
   Q_PROPERTY(bool online READ online NOTIFY onlineChanged)
   Q_PROPERTY(QString error READ error NOTIFY errorChanged)
   Q_PROPERTY(QString avatarSource READ avatarSource NOTIFY userChanged)
-  Q_PROPERTY(qint64 clockMs READ clockMs NOTIFY clockChanged)
+  Q_PROPERTY(QString reservationRemaining READ reservationRemaining NOTIFY
+               reservationRemainingChanged)
 
 public:
   explicit MobileController(QObject *parent = nullptr);
@@ -49,7 +49,6 @@ public:
   QVariantMap viewedOrder() const { return m_viewedOrder; }
   QVariantList presets() const { return m_presets; }
   QString locationName() const { return m_locationName; }
-  bool hasLocation() const { return m_hasLocation; }
   QString query() const { return m_query; }
   QString sort() const { return m_sort; }
   bool fastOnly() const { return m_fastOnly; }
@@ -58,7 +57,7 @@ public:
   bool online() const { return m_online; }
   QString error() const { return m_error; }
   QString avatarSource() const;
-  qint64 clockMs() const;
+  QString reservationRemaining() const;
 
   void setQuery(const QString &value);
   void setSort(const QString &value);
@@ -88,7 +87,6 @@ public:
   Q_INVOKABLE void openNavigation(const QVariantMap &station);
   Q_INVOKABLE QString statusLabel(const QString &status) const;
   Q_INVOKABLE QString formatTime(const QString &value) const;
-  Q_INVOKABLE QString reservationRemaining() const;
 
 signals:
   void pageChanged();
@@ -103,7 +101,7 @@ signals:
   void busyChanged();
   void onlineChanged();
   void errorChanged();
-  void clockChanged();
+  void reservationRemainingChanged();
   void notification(const QString &message);
   void unfinishedOrder(const QString &message);
   void navigationRequested(const QVariantMap &destination,

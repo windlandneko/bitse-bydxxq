@@ -20,8 +20,7 @@ namespace {
 void signalForecast(QProcess *process, bool force) {
   if (process->processId() <= 0) return;
 #ifdef Q_OS_UNIX
-  // uv owns a Python child. Signal the dedicated process group, including that
-  // child.
+  // Terminate uv and its Python child together.
   ::kill(-pid_t(process->processId()), force ? SIGKILL : SIGTERM);
 #else
   if (force)

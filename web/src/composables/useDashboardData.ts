@@ -92,6 +92,5 @@ export function useDashboardData() {
     lastSuccessAt,
     stale,
     refresh,
-    refreshIntervalMs: REFRESH_INTERVAL_MS,
   }
 }

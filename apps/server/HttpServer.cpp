@@ -8,17 +8,25 @@
 #include <QTimer>
 #include <QUrl>
 
+namespace {
+constexpr int MaxConnections = 64;
+constexpr int RequestTimeoutMs = 20000;
+constexpr qint64 MaxHeaderBytes = 16 * 1024;
+constexpr qint64 MaxBodyBytes = 3 * 1024 * 1024;
+constexpr qint64 MaxStaticFileBytes = 20 * 1024 * 1024;
+} // namespace
+
 HttpServer::HttpServer(QString webRoot, QString dataRoot, QObject *parent)
     : QTcpServer(parent), webRoot_(QDir(webRoot).absolutePath()),
       dataRoot_(QDir(dataRoot).absolutePath()) {
   connect(this, &QTcpServer::newConnection, this,
           &HttpServer::acceptConnections);
-  setMaxPendingConnections(64);
+  setMaxPendingConnections(MaxConnections);
 }
 void HttpServer::acceptConnections() {
   while (hasPendingConnections()) {
     auto *socket = nextPendingConnection();
-    if (activeConnections_ >= 64) {
+    if (activeConnections_ >= MaxConnections) {
       connect(socket, &QTcpSocket::disconnected, socket, &QObject::deleteLater);
       reply(socket, 503,
             QJsonDocument(failure("SERVER_BUSY", "连接数已满，请稍后重试"))
@@ -26,10 +34,10 @@ void HttpServer::acceptConnections() {
       continue;
     }
     ++activeConnections_;
-    socket->setReadBufferSize(3 * 1024 * 1024 + 16384);
+    socket->setReadBufferSize(MaxBodyBytes + MaxHeaderBytes);
     auto *timeout = new QTimer(socket);
     timeout->setSingleShot(true);
-    timeout->start(20000);
+    timeout->start(RequestTimeoutMs);
     connect(timeout, &QTimer::timeout, socket, [this, socket] {
       reply(socket, 408,
             QJsonDocument(failure("TIMEOUT", "请求超时"))
@@ -58,19 +66,19 @@ void HttpServer::process(QTcpSocket *socket) {
           QJsonDocument(failure("BAD_REQUEST", message))
             .toJson(QJsonDocument::Compact));
   };
-  if (bytes.size() > 3 * 1024 * 1024 + 16384) {
+  if (bytes.size() > MaxBodyBytes + MaxHeaderBytes) {
     bad(413, "请求内容过大");
     return;
   }
   auto delimiter = bytes.indexOf("\r\n\r\n");
   if (delimiter < 0) {
-    if (bytes.size() > 16384)
+    if (bytes.size() > MaxHeaderBytes)
       bad(431, "请求头过大");
     else
       socket->setProperty("buffer", bytes);
     return;
   }
-  if (delimiter > 16384) {
+  if (delimiter > MaxHeaderBytes) {
     bad(431, "请求头过大");
     return;
   }
@@ -119,7 +127,7 @@ void HttpServer::process(QTcpSocket *socket) {
     bad(411, "请求缺少Content-Length");
     return;
   }
-  if (length > 3 * 1024 * 1024) {
+  if (length > MaxBodyBytes) {
     bad(413, "请求内容过大");
     return;
   }
@@ -231,10 +239,9 @@ void HttpServer::reply(QTcpSocket *socket, int status, const QByteArray &body,
 }
 void HttpServer::staticFile(QTcpSocket *socket, const QString &path) {
   auto reject = [this, socket] {
-    reply(
-      socket, 404,
-      QJsonDocument(failure("NOT_FOUND", "页面或文件不存在，请先构建Web大屏"))
-        .toJson(QJsonDocument::Compact));
+    reply(socket, 404,
+          QJsonDocument(failure("NOT_FOUND", "页面或文件不存在"))
+            .toJson(QJsonDocument::Compact));
   };
   if (path.contains(QChar('\0')) || path.contains('\\')
       || path.split('/').contains("..")) {
@@ -256,7 +263,7 @@ void HttpServer::staticFile(QTcpSocket *socket, const QString &path) {
     return;
   }
   QFile file(candidate);
-  if (!file.open(QIODevice::ReadOnly) || file.size() > 20 * 1024 * 1024) {
+  if (!file.open(QIODevice::ReadOnly) || file.size() > MaxStaticFileBytes) {
     reject();
     return;
   }

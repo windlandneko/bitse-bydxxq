@@ -129,7 +129,7 @@ void UserMainWindow::createMapPage() {
   options->addWidget(route, 1);
   layout->addLayout(options);
   connect(route, &QPushButton::clicked, this, &UserMainWindow::loadRoute);
-  m_mapStatus = new QLabel("选择出行方式，点击开始导航", m_mapPage);
+  m_mapStatus = new QLabel(m_mapPage);
   m_mapStatus->setObjectName("mapStatus");
   m_mapStatus->setWordWrap(true);
   m_mapStatus->setStyleSheet("font-size: 12px; color: #65746a;");
@@ -148,12 +148,13 @@ void UserMainWindow::createMapPage() {
     QWebEngineSettings::LocalContentCanAccessFileUrls, false);
   layout->addWidget(m_map, 1);
   connect(m_map, &QWebEngineView::loadStarted, this, [this] {
-    m_mapStatus->setText("正在加载腾讯地图路线…");
+    m_mapStatus->setText("正在加载路线…");
+    m_mapStatus->show();
   });
   connect(m_map, &QWebEngineView::loadFinished, this, [this](bool success) {
-    m_mapStatus->setText(
-      success ? "腾讯地图 · 路线仅供出行参考"
-              : "地图暂时无法加载，请检查网络后点击开始导航重试。");
+    m_mapStatus->setText(success ? QString()
+                                 : QString("地图加载失败，请检查网络后重试。"));
+    m_mapStatus->setVisible(!success);
   });
   m_pages->addWidget(m_mapPage);
 }
@@ -169,7 +170,8 @@ void UserMainWindow::showNavigation(const QVariantMap &destination,
   m_routeDescription->setText("起点  " + originName + "\n终点  "
                               + destination.value("name").toString());
   m_map->setUrl(QUrl("about:blank"));
-  m_mapStatus->setText("选择驾车或步行，点击开始导航");
+  m_mapStatus->clear();
+  m_mapStatus->hide();
   m_pages->setCurrentWidget(m_mapPage);
 }
 

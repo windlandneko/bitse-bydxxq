@@ -1,6 +1,15 @@
 #include "AdminUi.h"
 #include "AdminWindowState.h"
 
+#include <QDialog>
+#include <QLabel>
+#include <QLineEdit>
+#include <QMap>
+#include <QPushButton>
+#include <QStatusBar>
+#include <QTableWidget>
+#include <QVBoxLayout>
+
 using namespace adminui;
 
 void AdminMainWindow::Impl::buildUsers() {
@@ -9,7 +18,7 @@ void AdminMainWindow::Impl::buildUsers() {
   auto *row = new QHBoxLayout;
   userSearch = new QLineEdit;
   userSearch->setObjectName("userPhoneSearch");
-  userSearch->setPlaceholderText("输入手机号的一部分进行搜索");
+  userSearch->setPlaceholderText("搜索手机号（支持部分号码）");
   userSearch->setClearButtonEnabled(true);
   userSearch->setMaxLength(11);
   row->addWidget(userSearch, 1);
@@ -116,8 +125,6 @@ void AdminMainWindow::Impl::userOrders(const QJsonObject &user) {
 void AdminMainWindow::Impl::buildOrders() {
   QVBoxLayout *layout;
   page("全平台订单记录", &layout);
-  layout->addWidget(
-    new QLabel("预约、充电、待结算、已支付及取消订单均可追溯。"));
   ordersTable = table(orderHeaders(), "ordersTable");
   ordersTable->sortItems(0, Qt::DescendingOrder);
   ordersTable->setColumnWidth(1, 220);
@@ -140,7 +147,6 @@ void AdminMainWindow::Impl::refreshOrders(bool interactive) {
 void AdminMainWindow::Impl::buildLogs() {
   QVBoxLayout *layout;
   page("运维操作日志", &layout);
-  layout->addWidget(new QLabel("追踪电站维护、设备指令及账号状态变更。"));
   logsTable = table({"日志 ID", "操作", "操作对象", "详情", "时间"},
                     "logsTable");
   logsTable->sortItems(0, Qt::DescendingOrder);

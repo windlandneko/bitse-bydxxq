@@ -1,4 +1,4 @@
-"""JSON-only forecast worker launched by the C++ service. No database access."""
+"""Generate load forecasts from the C++ service JSON input."""
 
 from __future__ import annotations
 
@@ -31,9 +31,10 @@ def forecast(payload: dict) -> dict:
   # Forecast hour 1 is the next whole clock hour, strictly after generatedAt.
   future = [cutoff + HOUR * hour for hour in range(1, 25)]
   for station in payload.get('stations', []):
+    chargers = station.get('chargers', [])
     charger_results = []
     station_observed = {}
-    for charger in station.get('chargers', []):
+    for charger in chargers:
       for timestamp, energy in observed.get(int(charger['id']), {}).items():
         station_observed[timestamp] = station_observed.get(timestamp, 0.0) + energy
     station_threshold = None
@@ -48,7 +49,7 @@ def forecast(payload: dict) -> dict:
       for item in payload.get('weather', [])
       if item.get('stationId') == station['id']
     }
-    for charger in station.get('chargers', []):
+    for charger in chargers:
       cid = int(charger['id'])
       power = max(0.0, float(charger.get('powerKw', 0)))
       history = observed.get(cid, {})
@@ -61,12 +62,10 @@ def forecast(payload: dict) -> dict:
         times = [first + HOUR * index for index in range(length)]
         values = np.array([history.get(time, 0.0) / power for time in times])
         peak_threshold = max(0.001, float(np.quantile(values * power, 0.85)))
-        # Short histories remain historical-hour estimates, explicitly labelled.
         if length >= 24 * 14 and np.count_nonzero(values) >= 48:
           x, y = training_samples(values, times, length, weather=weather)
           model = make_model().fit(x, y)
-          # The current incomplete hour is a persistence nowcast. Mark it
-          # explicitly; never train on unknown current/future measurements.
+          # Estimate the incomplete hour from the latest complete hour.
           nowcast = values[-1]
           context = np.append(values, nowcast)
           predicted = (
@@ -84,8 +83,7 @@ def forecast(payload: dict) -> dict:
           model_kind = 'historical-hour-baseline'
           baseline_count += 1
       else:
-        # With no history, current occupancy only supports a short persistence
-        # estimate. It is not a learned demand profile.
+        # Use current occupancy for a one-hour cold-start estimate.
         if charger.get('status') == 'charging':
           predicted[0] = power * 0.5
         baseline_count += 1
@@ -110,20 +108,19 @@ def forecast(payload: dict) -> dict:
           ],
         }
       )
+    usable = [
+      c
+      for c in chargers
+      if c.get('status') not in ('fault', 'offline', 'restarting', 'maintenance')
+    ]
+    capacity = sum(max(0.0, float(c.get('powerKw', 0))) for c in usable)
     hours = []
     for index, time in enumerate(future):
       load = sum(item['hours'][index]['loadKw'] for item in charger_results)
-      usable = [
-        c
-        for c in station.get('chargers', [])
-        if c.get('status') not in ('fault', 'offline', 'restarting', 'maintenance')
-      ]
-      capacity = sum(max(0.0, float(c.get('powerKw', 0))) for c in usable)
-      # Availability is an estimate of equivalent occupied chargers, rounded
-      # conservatively; it never exceeds the count of operational chargers.
+      # Round occupied equivalents up to estimate available chargers conservatively.
       busy = sum(
         item['hours'][index]['loadKw'] / max(0.001, float(c.get('powerKw', 0)))
-        for item, c in zip(charger_results, station.get('chargers', []))
+        for item, c in zip(charger_results, chargers)
       )
       hours.append(
         {
@@ -154,19 +151,19 @@ def forecast(payload: dict) -> dict:
   return {
     'generatedAt': iso(generated),
     'modelVersion': 'course-direct-rf-v2' if trained_count else 'course-baseline-v2',
-    'source': f'课程演示业务数据 · {method}（非公开数据实时预测）',
+    'source': f'模拟业务数据 · {method}',
     'stations': output_stations,
     'evaluation': {
       'trainedChargers': trained_count,
       'baselineChargers': baseline_count,
       'excludedSessions': rejected,
       'historyCutoff': iso(cutoff),
-      'note': '会话电量按实际时间均匀分摊；当前未完成小时以最近完整小时持续值估计；1/6/24h为对应小时平均功率；非实测桩级瞬时功率。',
+      'note': '会话电量按时长分摊；当前小时沿用最近完整小时估计；1/6/24h输出对应小时的平均功率。',
       'weatherSource': '外部提供的历史日天气'
       if payload.get('weather')
-      else '未接天气源，天气特征带缺失标记；未伪造天气',
-      'peakDefinition': '历史完整小时负荷85分位数（包含零负荷小时）；无历史按额定容量70%；表示相对高峰，不等同过载故障',
-      'calendarSource': 'chinese-calendar 2004–2026；超出支持年份回退周末并标记未知',
+      else '未配置天气数据，特征按缺失处理',
+      'peakDefinition': '历史完整小时负荷85分位数（含零负荷）；无历史按额定容量70%；用于识别需求高峰',
+      'calendarSource': 'chinese-calendar，支持2004至2026年；其他年份使用周末特征并标记未知',
       'timeScale': payload.get('timeScale', 1),
     },
   }

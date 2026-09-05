@@ -79,7 +79,7 @@ def test_server_shutdown_stops_prediction_process_tree(tmp_path, monkeypatch, ig
     )
   finally:
     server.close()
-    # Also clean up on the original regression, so a failed test never leaves a sleeper behind.
+    # Clean up the child even when the shutdown assertion fails.
     if not processes and ready.exists():
       processes = json.loads(ready.read_text())
     for pid in processes.values():

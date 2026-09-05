@@ -1,5 +1,14 @@
 #include "AdminUi.h"
-#include "AdminWindowState.h"
+
+#include <QDateTime>
+#include <QHBoxLayout>
+#include <QHeaderView>
+#include <QLabel>
+#include <QLineEdit>
+#include <QMap>
+#include <QPushButton>
+#include <QTableWidget>
+#include <QTimer>
 
 namespace adminui {
 namespace {
@@ -95,21 +104,19 @@ void fill(QTableWidget *target, const QJsonArray &rows,
     const auto item = rows[index].toObject();
     const auto values = columns(item);
     for (int column = 0; column < target->columnCount(); ++column) {
+      const auto value = values.value(column);
+      const auto text = value.toString();
       auto *cell = new SortableItem;
-      cell->setData(Qt::DisplayRole, values.value(column));
-      cell->setToolTip(values.value(column).toString());
-      const auto text = values.value(column).toString();
+      cell->setData(Qt::DisplayRole, value);
+      cell->setToolTip(text);
       bool numeric = false;
       const double sortValue = (text.startsWith("¥ ") ? text.mid(2) : text)
                                  .toDouble(&numeric);
       if (numeric) cell->setData(Qt::UserRole + 1, sortValue);
       if (target->horizontalHeaderItem(column)->text().contains("时长")) {
-        cell->setData(Qt::UserRole + 1,
-                      item
-                        .value(item.contains("chargingSeconds")
-                                 ? "chargingSeconds"
-                                 : "durationSeconds")
-                        .toDouble());
+        const auto key = item.contains("chargingSeconds") ? "chargingSeconds"
+                                                          : "durationSeconds";
+        cell->setData(Qt::UserRole + 1, item.value(key).toDouble());
       }
       if (column == 0) cell->setData(Qt::UserRole, item.toVariantMap());
       target->setItem(index, column, cell);

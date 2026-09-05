@@ -19,7 +19,7 @@ pnpm --dir "$root_dir/web" format:check
 if command -v shellcheck >/dev/null; then
   shellcheck -x scripts/setup_env.sh scripts/build.sh scripts/qt-env.sh scripts/test.sh
 fi
-# Fail explicitly when CMake omitted a test (for example an earlier uv-less build).
+# Require all suites even if CMake skipped an optional dependency.
 ctest --test-dir "$build_dir" --show-only=json-v1 | python3 -c '
 import json, sys
 registered = {test["name"] for test in json.load(sys.stdin)["tests"]}

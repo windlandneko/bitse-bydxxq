@@ -3,7 +3,6 @@
 #include <QJsonDocument>
 #include <QNetworkReply>
 #include <QNetworkRequest>
-#include <QTimer>
 #include <QUrl>
 
 ApiClient::ApiClient(QObject *parent) : QObject(parent) {
@@ -23,18 +22,6 @@ void ApiClient::setToken(const QString &token) {
   if (token_ == token) return;
   token_ = token;
   emit tokenChanged();
-}
-
-void ApiClient::request(QString action, QVariantMap params, QString tag) {
-  if (tag.isEmpty()) tag = action;
-  send(
-    action, QJsonObject::fromVariantMap(params),
-    [this, tag](QJsonValue data) {
-      emit succeeded(tag, data.toVariant());
-    },
-    [this, tag](QString message, QString code) {
-      emit failed(tag, message, code);
-    });
 }
 
 void ApiClient::call(const QString &action, const QJsonObject &params,
@@ -62,32 +49,31 @@ void ApiClient::send(const QString &action, const QJsonObject &params,
     request, QJsonDocument(QJsonObject{{"action", action}, {"params", params}})
                .toJson(QJsonDocument::Compact));
   const QString sentToken = token_;
-  connect(reply, &QNetworkReply::finished, this,
-          [this, reply, action, sentToken, success, failure] {
-            const auto error = reply->error();
-            const auto bytes = reply->readAll();
-            reply->deleteLater();
-            QJsonParseError parseError;
-            const auto doc = QJsonDocument::fromJson(bytes, &parseError);
-            if (parseError.error != QJsonParseError::NoError
-                || !doc.isObject()) {
-              failure(error == QNetworkReply::NoError
-                        ? "服务返回了无效数据"
-                        : "无法连接服务，请检查后端是否启动",
-                      "NETWORK_ERROR");
-              return;
-            }
-            const auto result = doc.object();
-            if (!result.value("ok").toBool()) {
-              const auto err = result.value("error").toObject();
-              failure(err.value("message").toString("操作失败，请重试"),
-                      err.value("code").toString("SERVER_ERROR"));
-              return;
-            }
-            const auto data = result.value("data");
-            if (action == "user.login" || action == "admin.login")
-              setToken(data.toObject().value("token").toString());
-            if (action == "auth.logout" && token_ == sentToken) setToken({});
-            if (success) success(data);
-          });
+  connect(
+    reply, &QNetworkReply::finished, this,
+    [this, reply, action, sentToken, success, failure] {
+      const auto error = reply->error();
+      const auto bytes = reply->readAll();
+      reply->deleteLater();
+      QJsonParseError parseError;
+      const auto doc = QJsonDocument::fromJson(bytes, &parseError);
+      if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
+        failure(error == QNetworkReply::NoError ? "服务返回了无效数据"
+                                                : "无法连接服务，请稍后重试",
+                "NETWORK_ERROR");
+        return;
+      }
+      const auto result = doc.object();
+      if (!result.value("ok").toBool()) {
+        const auto err = result.value("error").toObject();
+        failure(err.value("message").toString("操作失败，请重试"),
+                err.value("code").toString("SERVER_ERROR"));
+        return;
+      }
+      const auto data = result.value("data");
+      if (action == "user.login" || action == "admin.login")
+        setToken(data.toObject().value("token").toString());
+      if (action == "auth.logout" && token_ == sentToken) setToken({});
+      if (success) success(data);
+    });
 }

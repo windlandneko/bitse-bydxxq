@@ -2,14 +2,17 @@
 
 #include <QChartView>
 #include <QComboBox>
+#include <QDate>
 #include <QDialog>
 #include <QDoubleSpinBox>
+#include <QHostAddress>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QLabel>
 #include <QLineEdit>
 #include <QLineSeries>
+#include <QMap>
 #include <QPointer>
 #include <QPushButton>
 #include <QSpinBox>
@@ -19,9 +22,7 @@
 #include <QTest>
 #include <memory>
 
-// Contract fixture: exercises the real asynchronous ApiClient and widgets
-// through HTTP, including delayed responses that arrive after logout or dialog
-// closure.
+// Hold HTTP responses to exercise callbacks after logout or dialog closure.
 class RpcFixture : public QObject {
 public:
   QTcpServer server;

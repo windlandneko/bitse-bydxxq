@@ -65,7 +65,7 @@ Flickable {
               valueColor: Theme.accent
             }
             AppText {
-              text: '每度电 · 综合电价'
+              text: '电价（元/度）'
               color: '#d2e2d5'
               font.pixelSize: Theme.labelSize
             }
@@ -90,7 +90,7 @@ Flickable {
           objectName: 'stationNavigationButton'
           width: parent.width
           tone: 'secondary'
-          text: Number(mobile.station.distanceKm || 0).toFixed(1) + ' km · 导航前往'
+          text: '直线 ' + Number(mobile.station.distanceKm || 0).toFixed(1) + ' km · 导航'
           trailingIcon: 'navigation'
           onClicked: mobile.openNavigation(mobile.station)
         }
@@ -107,26 +107,17 @@ Flickable {
         x: Theme.cardPadding
         y: Theme.cardPadding
         width: parent.width - Theme.cardPadding * 2
-        text: '1 小时后预计空闲 ' + Number(mobile.station.predictedAvailableChargers || 0) + ' 桩，实际可用数量以当前状态为准。'
+        text: '1 小时后预计空闲 ' + Number(mobile.station.predictedAvailableChargers || 0) + ' 桩'
         font.pixelSize: Theme.bodySize
         color: '#586e35'
         wrapMode: Text.WordWrap
         lineHeight: 1.5
       }
     }
-    RowLayout {
-      width: parent.width
-      AppText {
-        Layout.fillWidth: true
-        text: '选择充电桩'
-        font.pixelSize: Theme.bodyLargeSize
-        font.weight: Font.Medium
-      }
-      AppText {
-        text: '快充 DC / 慢充 AC'
-        font.pixelSize: Theme.labelSize
-        color: Theme.muted
-      }
+    AppText {
+      text: '选择充电桩'
+      font.pixelSize: Theme.bodyLargeSize
+      font.weight: Font.Medium
     }
     Repeater {
       model: mobile.chargers
@@ -198,11 +189,11 @@ Flickable {
       width: parent.width
       visible: mobile.chargers.length === 0
       title: '暂时没有电桩信息'
-      description: '点击右上角刷新，获取本站电桩状态。'
+      description: '刷新后重试。'
     }
     AppText {
       width: parent.width
-      text: '预约保留 15 分钟，充电后按实际电量计费。'
+      text: '预约保留 15 分钟，按充电量计费。'
       color: Theme.muted
       font.pixelSize: Theme.labelSize
       wrapMode: Text.WordWrap

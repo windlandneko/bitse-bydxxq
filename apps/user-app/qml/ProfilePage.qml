@@ -111,7 +111,7 @@ Flickable {
         x: Theme.cardPadding
         y: Theme.cardPadding
         width: parent.width - Theme.cardPadding * 2
-        text: '账号已冻结，暂时无法预约或开始充电。已有订单仍可结束、结算，请联系管理员。'
+        text: '账号已冻结，无法预约或开始充电。已有订单可结束并结算。请联系管理员解冻。'
         wrapMode: Text.WordWrap
         color: Theme.danger
         lineHeight: 1.5
@@ -123,14 +123,12 @@ Flickable {
       MenuRow {
         width: parent.width
         title: '个人信息'
-        description: '修改头像与昵称'
         iconName: 'user'
         onClicked: mobile.navigate('editProfile')
       }
       MenuRow {
         width: parent.width
         title: '充电记录'
-        description: '订单与充电小票'
         iconName: 'list'
         onClicked: mobile.selectTab('orders')
       }
@@ -175,7 +173,8 @@ Flickable {
       }
       AppText {
         width: parent.width
-        text: Number(mobile.activeOrder.id || 0) > 0 ? '你还有未完成订单。退出不会停止充电或取消预约，再次登录可继续处理。' : '订单和余额会保留，下次输入手机号即可登录。'
+        visible: Number(mobile.activeOrder.id || 0) > 0
+        text: '退出后充电仍会计费，预约仍保留。'
         color: Theme.muted
         wrapMode: Text.WordWrap
         lineHeight: 1.5

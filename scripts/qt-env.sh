@@ -36,6 +36,6 @@ if [[ -d "$charging_qt_qml_dir" ]]; then
     export QTWEBENGINEPROCESS_PATH="${QTWEBENGINEPROCESS_PATH:-$charging_qt_prefix/lib/qt6/libexec/QtWebEngineProcess}"
   fi
   # Qt 6.2 reads resource/translation paths from qt.conf; build.sh writes it
-  # beside executables and the local WebEngine helper. Do not disable sandboxing.
+  # beside executables and the local WebEngine helper.
 fi
 unset charging_qt_prefix charging_qt_triplet charging_qt_lib_dir charging_qt_qml_dir

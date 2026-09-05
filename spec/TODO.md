@@ -16,7 +16,7 @@ AI规格中的额外数据库/架构限制不作为验收门槛。以下为已�
 | 11位手机号免密/自动注册 | Accounts.cpp、LoginPage | 服务登录/角色测试、QML点击 |
 | 默认灰头像/昵称/余额 | ProfilePage、默认头像、注册昵称规则 | GUI与API |
 | 上传头像、改昵称、模拟充值 | ProfileEditPage/RechargePage、头像校验与整数分钱包 | 头像合法/非法、0.01元、重复充值测试 |
-| 预约—充电—计费—结算 | Orders.cpp完整状态机，Charge/Settlement/Receipt页面 | 真实GUI闭环、支付幂等、价格快照 |
+| 预约、充电、计费、结算 | Orders.cpp状态机及相关页面 | GUI流程、支付幂等、价格快照 |
 | 未完成充电拦截并转结算 | MobileController入口及第二客户端恢复 | Qt真实点击流程覆盖 |
 | 管理员admin/123456 | AdminMainWindow登录、PBKDF2存储 | QtTest/权限检查 |
 | QChart近7/30日营收与三指标 | AdminOverview.cpp | 维度切换、实际支付后营收同步 |

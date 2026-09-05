@@ -18,7 +18,10 @@ MobileController::MobileController(QObject *parent)
       m_pollTimer(new QTimer(this)) {
   auto *clock = new QTimer(this);
   clock->setInterval(1000);
-  connect(clock, &QTimer::timeout, this, &MobileController::clockChanged);
+  connect(clock, &QTimer::timeout, this, [this] {
+    if (m_activeOrder.value("status") == "reserved")
+      emit reservationRemainingChanged();
+  });
   clock->start();
   m_pollTimer->setInterval(2000);
   connect(m_pollTimer, &QTimer::timeout, this, [this] {
@@ -66,8 +69,6 @@ void MobileController::call(const QString &action, const QVariantMap &params,
         emit stationsChanged();
       }
       if (action == "orders.active") m_pollInFlight = false;
-      // Read polling failures are quiet; the status strip still exposes
-      // connectivity.
       if (!foreground && m_online) {
         m_online = false;
         emit onlineChanged();
@@ -109,7 +110,6 @@ void MobileController::login(const QString &phone) {
       refreshStations();
     fetchActive(true);
     m_pollTimer->start();
-    emit notification("欢迎回来，" + m_user.value("nickname").toString());
   });
 }
 
@@ -134,9 +134,9 @@ void MobileController::logout() {
   emit userChanged();
   emit ordersChanged();
   emit activeOrderChanged();
+  emit reservationRemainingChanged();
   emit viewedOrderChanged();
   setPage("login");
-  emit notification("已退出登录");
 }
 
 void MobileController::setPage(const QString &page, bool push) {
@@ -191,13 +191,14 @@ void MobileController::setActiveOrder(const QVariantMap &order) {
   const QString previousStatus = m_activeOrder.value("status").toString();
   m_activeOrder = order;
   emit activeOrderChanged();
+  emit reservationRemainingChanged();
   if (!order.isEmpty() && m_viewedOrder.value("id") == order.value("id")) {
     m_viewedOrder = order;
     emit viewedOrderChanged();
   }
   if (previousStatus == "charging"
       && order.value("status") == "pending_payment") {
-    emit notification("充电已结束，请确认并结算订单");
+    emit notification("充电已结束，请结算");
     if (m_page == "charge") setPage("settlement");
   }
 }
@@ -288,7 +289,7 @@ void MobileController::fetchStation(int stationId, bool foreground) {
       m_station = result.value("station").toObject().toVariantMap();
       m_chargers = result.value("chargers").toVariant().toList();
       emit stationChanged();
-      if (m_page != "station" && m_page == "home") setPage("station", true);
+      if (m_page == "home") setPage("station", true);
     },
     foreground);
 }
@@ -335,9 +336,9 @@ void MobileController::fetchActive(bool recover, std::function<void()> empty) {
         openActiveOrder();
         const auto status = order.value("status").toString();
         if (status == "charging" || status == "pending_payment")
-          emit unfinishedOrder("您有未完成的充电订单，请先结算");
+          emit unfinishedOrder("有未完成的充电订单，请先结算");
         else
-          emit notification("已恢复您的预约，可继续充电或取消");
+          emit notification("预约已恢复");
       }
     },
     recover);
@@ -347,7 +348,7 @@ void MobileController::reserve(int chargerId) {
   if (busy()) return;
   fetchActive(true, [this, chargerId] {
     if (m_user.value("balanceCents").toLongLong() <= 0) {
-      emit notification("钱包余额不足，请先充值后预约");
+      emit notification("余额不足，请先充值");
       setPage("recharge", true);
       return;
     }
@@ -362,7 +363,7 @@ void MobileController::reserve(int chargerId) {
            m_reservationKey.clear();
            setPage("charge", true);
            refreshStations();
-           emit notification("预约成功，请在保留时间内开始充电");
+           emit notification("预约成功");
          });
   });
 }
@@ -388,13 +389,11 @@ void MobileController::orderAction(const QString &action) {
       refreshProfile();
       fetchOrders();
       refreshStations();
-      emit notification(status == "paid" ? "结算成功，感谢使用智充出行"
-                                         : "预约已取消，电桩已释放");
+      emit notification(status == "paid" ? "支付成功" : "预约已取消");
     } else {
       setActiveOrder(order);
       setPage(status == "pending_payment" ? "settlement" : "charge");
-      if (action == "orders.start")
-        emit notification("已开始充电，关闭客户端后仍会继续计费");
+      if (action == "orders.start") emit notification("已开始充电");
     }
   });
 }
@@ -477,8 +476,7 @@ void MobileController::recharge(const QString &amount) {
          setUser(value.toObject().toVariantMap());
          m_rechargeKey.clear();
          back();
-         emit notification(
-           QString("充值成功，已到账 ¥%1").arg(cents / 100.0, 0, 'f', 2));
+         emit notification(QString("已到账 ¥%1").arg(cents / 100.0, 0, 'f', 2));
        });
 }
 
@@ -530,7 +528,7 @@ QString MobileController::avatarSource() const {
 void MobileController::openNavigation(const QVariantMap &station) {
   if (!m_hasLocation) {
     setPage("location", true);
-    emit notification("请先选择当前位置，再开始导航");
+    emit notification("请先选择当前位置");
     return;
   }
   if (station.isEmpty()) return;
@@ -554,10 +552,6 @@ QString MobileController::formatTime(const QString &value) const {
   const auto time = QDateTime::fromString(value, Qt::ISODate);
   return time.isValid() ? time.toLocalTime().toString("yyyy-MM-dd HH:mm")
                         : QString("—");
-}
-
-qint64 MobileController::clockMs() const {
-  return QDateTime::currentMSecsSinceEpoch();
 }
 
 QString MobileController::reservationRemaining() const {

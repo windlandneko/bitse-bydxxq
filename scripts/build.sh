@@ -11,8 +11,7 @@ done
 build_dir="${CHARGING_BUILD_DIR:-$root_dir/build/full}"
 [[ "$build_dir" == /* ]] || build_dir="$root_dir/$build_dir"
 
-# Resolve locked dependencies before CMake so Python CTest registration cannot
-# silently disappear because uv is missing during initial configuration.
+# Install Python dependencies before CMake registers their tests.
 pnpm --dir "$root_dir/web" install --frozen-lockfile
 uv sync --project "$root_dir/ml" --frozen
 args=(-S "$root_dir" -B "$build_dir" -DCMAKE_BUILD_TYPE="${CHARGING_BUILD_TYPE:-RelWithDebInfo}" -DBUILD_TESTING=ON -DBUILD_USER_APP=ON -DBUILD_ADMIN_APP=ON -DBUILD_SERVER=ON -DBUILD_MOBILE_FLOW_TESTS=ON)
