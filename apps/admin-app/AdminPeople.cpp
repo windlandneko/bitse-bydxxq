@@ -13,8 +13,7 @@
 using namespace adminui;
 
 void AdminMainWindow::Impl::buildUsers() {
-  QVBoxLayout *layout;
-  page("用户管理", &layout);
+  auto *layout = page("用户管理");
   auto *row = new QHBoxLayout;
   userSearch = new QLineEdit;
   userSearch->setObjectName("userPhoneSearch");
@@ -123,8 +122,7 @@ void AdminMainWindow::Impl::userOrders(const QJsonObject &user) {
 }
 
 void AdminMainWindow::Impl::buildOrders() {
-  QVBoxLayout *layout;
-  page("全平台订单记录", &layout);
+  auto *layout = page("全平台订单记录");
   ordersTable = table(orderHeaders(), "ordersTable");
   ordersTable->sortItems(0, Qt::DescendingOrder);
   ordersTable->setColumnWidth(1, 220);
@@ -145,8 +143,7 @@ void AdminMainWindow::Impl::refreshOrders(bool interactive) {
 }
 
 void AdminMainWindow::Impl::buildLogs() {
-  QVBoxLayout *layout;
-  page("运维操作日志", &layout);
+  auto *layout = page("运维操作日志");
   logsTable = table({"日志 ID", "操作", "操作对象", "详情", "时间"},
                     "logsTable");
   logsTable->sortItems(0, Qt::DescendingOrder);

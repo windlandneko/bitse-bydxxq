@@ -6,6 +6,7 @@ import urllib.request
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 
+import pytest
 from conftest import Server
 
 
@@ -15,6 +16,24 @@ def key():
 
 def reserve(server, token, charger=1):
   return server.rpc('orders.reserve', {'chargerId': charger, 'idempotencyKey': key()}, token)
+
+
+@pytest.mark.parametrize('seed', [False, True])
+def test_dashboard_before_first_prediction(tmp_path, seed):
+  server = Server(tmp_path / 'state', seed=seed)
+  try:
+    with urllib.request.urlopen(server.url + '/api/dashboard') as response:
+      dashboard = json.load(response)
+    assert dashboard['forecastMeta'] == {
+      'generatedAt': '',
+      'modelVersion': '',
+      'source': '预测尚未生成',
+    }
+    assert dashboard['forecast24h'] == []
+    assert len(dashboard['stations']) == (5 if seed else 0)
+    assert len(dashboard['hourlyHeatmap']) == 7 * 24
+  finally:
+    server.close()
 
 
 def test_phone_login_and_role_boundaries(server):

@@ -20,8 +20,10 @@ const chartElement = useChart(() => {
       trigger: 'axis',
       formatter: (params) => {
         const point = firstTooltipItem(params)
-        const item = props.data[point?.dataIndex ?? 0]
-        return `${point?.name ?? ''}<br/><b>¥ ${Number(item?.revenue ?? 0).toFixed(2)}</b><br/>${item?.orderCount ?? 0} 单`
+        const item = point && props.data[point.dataIndex]
+        return item
+          ? `${item.date.slice(5)}<br/><b>¥ ${item.revenue.toFixed(2)}</b><br/>${item.orderCount} 单`
+          : ''
       },
     },
     xAxis: {

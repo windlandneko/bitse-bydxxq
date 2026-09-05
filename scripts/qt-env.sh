@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Source this file. Standard apt/Qt SDK installs require no Qt overrides.
+# Source this file. Standard Ubuntu Qt installs require no overrides.
 # Load tools installed by setup_env.sh without replacing existing global binaries.
 for charging_tool_bin in \
   "$HOME/.local/opt/charging-tools/node-v24.20.0/bin" \
@@ -12,13 +12,9 @@ done
 unset charging_tool_bin
 
 charging_qt_prefix="${CHARGING_QT_PREFIX:-$HOME/.local/opt/charging-qt/usr}"
-charging_qt_triplet="$(dpkg-architecture -qDEB_HOST_MULTIARCH 2>/dev/null || true)"
-charging_qt_lib_dir="$charging_qt_prefix/lib/${charging_qt_triplet:-x86_64-linux-gnu}"
-if [[ ! -d "$charging_qt_lib_dir" && -d "$charging_qt_prefix/lib" ]]; then
-  charging_qt_lib_dir="$charging_qt_prefix/lib"
-fi
+charging_qt_triplet="$(dpkg-architecture -qDEB_HOST_MULTIARCH)"
+charging_qt_lib_dir="$charging_qt_prefix/lib/$charging_qt_triplet"
 charging_qt_qml_dir="$charging_qt_lib_dir/qt6/qml"
-[[ -d "$charging_qt_qml_dir" ]] || charging_qt_qml_dir="$charging_qt_prefix/qml"
 if [[ -d "$charging_qt_qml_dir" ]]; then
   export CHARGING_QT_PREFIX="$charging_qt_prefix"
   export CHARGING_QT_LIB_DIR="$charging_qt_lib_dir"

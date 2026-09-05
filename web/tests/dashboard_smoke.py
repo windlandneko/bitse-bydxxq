@@ -163,6 +163,27 @@ with sync_playwright() as playwright:
     # These images deliberately use browser-only fixtures; keep them separate from real data.
     page.screenshot(path=str(args.output / f'fixture-many-stations-{width}.png'))
 
+  reordered = copy.deepcopy(expanded)
+  reordered['stations'].insert(0, reordered['stations'].pop())
+  page.unroute('**/api/dashboard')
+  page.route('**/api/dashboard', lambda route: route.fulfill(json=reordered))
+  page.get_by_role('button', name='刷新数据').click()
+  page.wait_for_timeout(300)
+  assert page.locator('.station-detail b').inner_text() == last['name']
+  check_contained(last_button, page.locator('.capacity-list'))
+  reordered['stations'].pop(0)
+  page.get_by_role('button', name='刷新数据').click()
+  page.wait_for_timeout(300)
+  first = reordered['stations'][0]
+  assert page.locator('.station-detail b').inner_text() == first['name']
+  assert (
+    page.locator(f'.capacity-item button[data-station-id="{first["id"]}"]').get_attribute(
+      'aria-pressed'
+    )
+    == 'true'
+  )
+  assert page.locator('.capacity-item').count() == len(reordered['stations'])
+
   expired = copy.deepcopy(actual)
   expired['generatedAt'] = expired['dataCutoff'] = '2000-01-01T00:00:00Z'
   expired['forecastMeta']['generatedAt'] = '2000-01-01T00:00:00Z'
@@ -224,6 +245,24 @@ with sync_playwright() as playwright:
   )
   check_layout(page, 1366, 768)
 
+  retained_count = page.locator('.kpi-card').first.inner_text()
+  broken_station = copy.deepcopy(restored)
+  broken_station['stations'][0] = None
+  broken_number = copy.deepcopy(restored)
+  broken_number['kpis']['totalChargingCount'] = 'invalid'
+  broken_forecast = copy.deepcopy(restored)
+  broken_forecast['forecast24h'] = [{'time': 'invalid'}]
+  for payload in [broken_station, broken_number, broken_forecast]:
+    page.unroute('**/api/dashboard')
+    page.route(
+      '**/api/dashboard', lambda route, _request, payload=payload: route.fulfill(json=payload)
+    )
+    with page.expect_response('**/api/dashboard'):
+      page.get_by_role('button', name='刷新数据').click()
+    page.get_by_text('统计接口格式不完整', exact=True).wait_for()
+    assert page.locator('.kpi-card').first.inner_text() == retained_count
+    assert page.locator('.station-detail b').inner_text() == restored['stations'][1]['name']
+
   page.unroute('**/api/dashboard')
   page.route('**/api/dashboard', lambda route: route.fulfill(status=503, body='test disconnect'))
   page.wait_for_timeout(1000)
@@ -231,8 +270,25 @@ with sync_playwright() as playwright:
   page.get_by_role('button', name='刷新数据').click()
   page.get_by_text('连接中断 · 保留最近快照').wait_for()
   assert page.locator('.kpi-card').first.inner_text() == count
+
+  initial = browser.new_page(viewport={'width': 1366, 'height': 768})
+  initial.on('pageerror', lambda error: errors.append(str(error)))
+  initial.route('**/api/dashboard', lambda route: route.fulfill(status=503))
+  initial.goto(args.url)
+  initial.get_by_text('暂无有效数据', exact=True).wait_for()
+  no_forecast = copy.deepcopy(restored)
+  no_forecast['forecast24h'] = []
+  no_forecast['forecastMeta'] = {'generatedAt': '', 'modelVersion': '', 'source': ''}
+  initial.unroute('**/api/dashboard')
+  initial.route('**/api/dashboard', lambda route: route.fulfill(json=no_forecast))
+  initial.get_by_role('button', name='刷新数据').click()
+  initial.get_by_text('业务服务已连接', exact=True).wait_for()
+  initial.get_by_text('等待预测任务', exact=True).wait_for()
+  assert initial.locator('.station-detail b').inner_text() == restored['stations'][0]['name']
+  check_layout(initial, 1366, 768)
+  initial.close()
   assert not errors, errors
   browser.close()
 print(
-  '通过：真实数据、两尺寸布局、图表提示/空态恢复、地图点击/站点联动/键盘、多站点/大数值、过期与断连'
+  '通过：真实数据、两尺寸布局、图表交互、站点重排/移除/键盘、多站点/大数值、初始无数据/缺预测、坏响应保留快照'
 )

@@ -12,7 +12,6 @@ set(ADMIN_SOURCES
 qt_add_executable(charging-admin main.cpp ${ADMIN_SOURCES})
 find_package(Qt6 6.2 REQUIRED COMPONENTS Charts)
 target_link_libraries(charging-admin PRIVATE charging-client Qt6::Widgets Qt6::Charts)
-set_target_properties(charging-admin PROPERTIES WIN32_EXECUTABLE TRUE)
 
 if(BUILD_TESTING)
   find_package(Qt6 6.2 REQUIRED COMPONENTS Test)

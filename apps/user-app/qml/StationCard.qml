@@ -4,12 +4,12 @@ import QtQuick.Layouts 1.15
 
 Button {
   id: card
-  property var stationData: ({})
-  objectName: 'stationCard_' + (stationData.id || 0)
+  required property var stationData
+  objectName: 'stationCard_' + stationData.id
   padding: Theme.cardPadding
   implicitHeight: info.implicitHeight + topPadding + bottomPadding
-  Accessible.name: (stationData.name || '电站') + '，空闲 ' + (stationData.idleChargers || 0) + ' 个充电桩，查看详情'
-  onClicked: mobile.openStation(Number(stationData.id))
+  Accessible.name: stationData.name + '，空闲 ' + stationData.idleChargers + ' 个充电桩，查看详情'
+  onClicked: mobile.openStation(stationData.id)
   background: Rectangle {
     radius: Theme.cardRadius
     color: card.down ? '#f0f5ed' : Theme.card
@@ -37,14 +37,14 @@ Button {
         spacing: Theme.microSpace
         AppText {
           width: parent.width
-          text: card.stationData.name || ''
+          text: card.stationData.name
           font.pixelSize: Theme.bodyLargeSize
           font.weight: Font.Medium
           elide: Text.ElideRight
         }
         AppText {
           width: parent.width
-          text: card.stationData.address || ''
+          text: card.stationData.address
           font.pixelSize: Theme.labelSize
           color: Theme.muted
           elide: Text.ElideRight
@@ -54,9 +54,9 @@ Button {
     Flow {
       width: parent.width
       spacing: Theme.space
-      visible: card.highlighted
+      visible: card.highlighted && card.stationData.predictedAvailableChargers >= 0
       Badge {
-        text: '1 小时后预计空闲 ' + Number(card.stationData.predictedAvailableChargers || 0) + ' 桩'
+        text: '1 小时后预计空闲 ' + card.stationData.predictedAvailableChargers + ' 桩'
         fill: '#f0f3eb'
         textColor: Theme.muted
       }
@@ -69,23 +69,23 @@ Button {
         spacing: Theme.microSpace
         MoneyText {
           objectName: 'stationPrice'
-          cents: Number(card.stationData.priceCents || 0)
+          cents: card.stationData.priceCents
           suffix: '/度'
         }
         AppText {
-          text: '空闲 ' + (card.stationData.idleChargers || 0) + ' / ' + (card.stationData.totalChargers || 0) + ' 桩'
+          text: '空闲 ' + card.stationData.idleChargers + ' / ' + card.stationData.totalChargers + ' 桩'
           font.pixelSize: Theme.labelSize
           color: Theme.muted
         }
       }
       ActionButton {
-        objectName: 'navigateStation_' + (card.stationData.id || 0)
+        objectName: 'navigateStation_' + card.stationData.id
         Layout.preferredWidth: 112
-        text: Number(card.stationData.distanceKm || 0).toFixed(1) + ' km'
+        text: card.stationData.distanceKm.toFixed(1) + ' km'
         trailingIcon: 'navigation'
         horizontalPadding: Theme.space
         tone: 'secondary'
-        Accessible.name: '导航到' + (card.stationData.name || '') + '，直线距离' + Number(card.stationData.distanceKm || 0).toFixed(1) + '公里'
+        Accessible.name: '导航到' + card.stationData.name + '，直线距离' + card.stationData.distanceKm.toFixed(1) + '公里'
         onClicked: mobile.openNavigation(card.stationData)
       }
     }

@@ -6,7 +6,7 @@ import { graphic, firstTooltipItem } from '../lib/echarts'
 const props = defineProps<{ data: StationRankingItem[] }>()
 
 const chartElement = useChart(() => {
-  const rows = [...props.data].sort((a, b) => b.energyKwh - a.energyKwh).slice(0, 6)
+  const rows = props.data.slice(0, 6)
   return {
     grid: { left: 82, right: 24, top: 10, bottom: 20 },
     tooltip: {
@@ -14,8 +14,9 @@ const chartElement = useChart(() => {
       renderMode: 'richText',
       axisPointer: { type: 'shadow' },
       formatter: (params) => {
-        const item = firstTooltipItem(params)
-        return `${item?.name ?? ''}\n${Number(item?.value ?? 0).toFixed(1)} kWh`
+        const point = firstTooltipItem(params)
+        const item = point && rows[point.dataIndex]
+        return item ? `${item.stationName}\n${item.energyKwh.toFixed(1)} kWh` : ''
       },
     },
     xAxis: {
@@ -49,7 +50,7 @@ const chartElement = useChart(() => {
           position: 'right',
           color: '#c8f6ff',
           fontSize: 10,
-          formatter: ({ value }) => Number(value).toFixed(1),
+          formatter: ({ dataIndex }) => rows[dataIndex].energyKwh.toFixed(1),
         },
         itemStyle: { borderRadius: [0, 6, 6, 0] },
       },

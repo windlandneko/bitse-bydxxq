@@ -30,7 +30,7 @@ public:
             const std::function<void(QJsonValue)> &success, bool interactive);
   void buildLogin();
   void buildWorkspace();
-  void page(const QString &title, QVBoxLayout **layout);
+  QVBoxLayout *page(const QString &title);
   QLabel *metric(const QString &title, QHBoxLayout *row);
   void buildOverview();
   void refreshOverview(bool interactive);

@@ -28,8 +28,7 @@ pnpm --dir "$root_dir/web" build
 # The optional prefix contains Ubuntu Qt add-ons, while base Qt/platform plugins
 # remain installed by apt. Qt 6.2 WebEngine needs qt.conf in BOTH processes.
 if [[ -n "${CHARGING_QT_PREFIX:-}" && -x "$CHARGING_QT_PREFIX/lib/qt6/libexec/QtWebEngineProcess" ]]; then
-  plugin_dir="$(qmake6 -query QT_INSTALL_PLUGINS 2>/dev/null || true)"
-  [[ -d "$plugin_dir" ]] || plugin_dir="/usr/lib/$(dpkg-architecture -qDEB_HOST_MULTIARCH)/qt6/plugins"
+  plugin_dir="$(qmake6 -query QT_INSTALL_PLUGINS)"
   for config_dir in "$build_dir/apps/user-app" "$build_dir/apps/admin-app" "$build_dir/apps/server" "$CHARGING_QT_PREFIX/lib/qt6/libexec"; do
     [[ -d "$config_dir" ]] || continue
     cat > "$config_dir/qt.conf" <<CONFIG

@@ -3,38 +3,46 @@ import type { DashboardData } from '../types/dashboard'
 import { emptyDashboard } from '../types/dashboard'
 
 const REFRESH_INTERVAL_MS = 5_000
+function hasFields(value: unknown, strings: string[], numbers: string[]) {
+  if (!value || typeof value !== 'object') return false
+  const row = value as Record<string, unknown>
+  return (
+    strings.every((key) => typeof row[key] === 'string') &&
+    numbers.every((key) => typeof row[key] === 'number' && Number.isFinite(row[key]))
+  )
+}
 function isDashboardData(value: unknown): value is DashboardData {
   if (!value || typeof value !== 'object') return false
   const data = value as Partial<DashboardData>
+  const collections: [unknown, string[], string[]][] = [
+    [data.chargerStatus, ['key', 'label'], ['value']],
+    [data.stationRanking, ['stationName'], ['energyKwh']],
+    [data.revenueTrend, ['date'], ['revenue', 'orderCount']],
+    [data.hourlyHeatmap, [], ['weekday', 'hour', 'energyKwh']],
+    [data.chargerTypeRatio, ['type', 'label'], ['count']],
+    [data.forecast24h, ['time'], ['predictedLoadKw']],
+    [
+      data.stations,
+      ['name', 'address', 'region'],
+      ['id', 'latitude', 'longitude', 'totalChargers', 'idleChargers', 'onlineRate', 'priceCents'],
+    ],
+    [data.recentEvents, ['action', 'detail', 'createdAt'], []],
+  ]
   return (
-    typeof data.generatedAt === 'string' &&
-    typeof data.dataCutoff === 'string' &&
-    Number.isFinite(Date.parse(data.generatedAt)) &&
-    Number.isFinite(Date.parse(data.dataCutoff)) &&
-    typeof data.source === 'string' &&
-    !!data.kpis &&
-    Object.values(data.kpis).every((v) => typeof v === 'number' && Number.isFinite(v)) &&
-    [
-      'totalChargingCount',
-      'totalRevenue',
-      'onlineChargers',
-      'registeredUsers',
-      'totalEnergyKwh',
-    ].every((k) => k in data.kpis!) &&
-    [
-      'chargerStatus',
-      'stationRanking',
-      'revenueTrend',
-      'hourlyHeatmap',
-      'chargerTypeRatio',
-      'forecast24h',
-      'stations',
-      'recentEvents',
-    ].every((k) => Array.isArray(data[k as keyof DashboardData])) &&
-    !!data.forecastMeta &&
-    typeof data.forecastMeta.generatedAt === 'string' &&
-    typeof data.forecastMeta.modelVersion === 'string' &&
-    typeof data.forecastMeta.source === 'string'
+    hasFields(data, ['generatedAt', 'dataCutoff', 'source'], []) &&
+    Number.isFinite(Date.parse(data.generatedAt!)) &&
+    Number.isFinite(Date.parse(data.dataCutoff!)) &&
+    hasFields(
+      data.kpis,
+      [],
+      ['totalChargingCount', 'totalRevenue', 'onlineChargers', 'registeredUsers', 'totalEnergyKwh'],
+    ) &&
+    hasFields(data.forecastMeta, ['generatedAt', 'modelVersion', 'source'], []) &&
+    collections.every(
+      ([items, strings, numbers]) =>
+        Array.isArray(items) && items.every((item) => hasFields(item, strings, numbers)),
+    ) &&
+    data.forecast24h!.every((item) => typeof item.isPeak === 'boolean')
   )
 }
 export function useDashboardData() {

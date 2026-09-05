@@ -161,11 +161,7 @@ QJsonObject Service::dashboard() {
     }
   QJsonArray forecast;
   for (auto item : aggregate) forecast.append(item);
-  auto last = db_
-                .row(
-                  "SELECT created_at FROM audit_logs ORDER BY id DESC LIMIT 1")
-                .value("created_at")
-                .toString();
+  const auto forecastMeta = forecasts();
   auto now = utcNow();
   QJsonObject result{
     {"generatedAt", now},
@@ -182,8 +178,8 @@ QJsonObject Service::dashboard() {
     {"recentEvents", db_.rows("SELECT action,detail,created_at AS createdAt "
                               "FROM audit_logs ORDER BY id DESC LIMIT 10")},
     {"forecastMeta",
-     QJsonObject{{"generatedAt", forecastData_.value("generatedAt")},
-                 {"modelVersion", forecastData_.value("modelVersion")},
-                 {"source", forecastData_.value("source")}}}};
+     QJsonObject{{"generatedAt", forecastMeta.value("generatedAt")},
+                 {"modelVersion", forecastMeta.value("modelVersion")},
+                 {"source", forecastMeta.value("source")}}}};
   return result;
 }

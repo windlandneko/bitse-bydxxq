@@ -6,15 +6,13 @@ Flickable {
   id: screen
   objectName: 'ordersPage'
   property string filter: 'all'
-  property var filtered: {
-    var rows = []
-    for (var i = 0; i < mobile.orders.length; i++) {
-      var order = mobile.orders[i]
-      if (filter === 'all' || (filter === 'active' && ['reserved', 'charging', 'pending_payment'].indexOf(order.status) >= 0) || (filter === 'paid' && order.status === 'paid'))
-        rows.push(order)
-    }
-    return rows
-  }
+  readonly property var filtered: mobile.orders.filter(function (order) {
+      if (filter === 'all')
+        return true
+      if (filter === 'paid')
+        return order.status === 'paid'
+      return ['reserved', 'charging', 'pending_payment'].includes(order.status)
+    })
   contentWidth: width
   contentHeight: content.height + Theme.pagePadding * 2
   boundsBehavior: Flickable.StopAtBounds
@@ -62,7 +60,7 @@ Flickable {
         implicitHeight: details.implicitHeight + Theme.cardPadding * 2
         padding: Theme.cardPadding
         Accessible.name: modelData.stationName + '，' + mobile.statusLabel(modelData.status) + '，查看订单'
-        onClicked: mobile.openOrder(Number(modelData.id))
+        onClicked: mobile.openOrder(modelData.id)
         background: Rectangle {
           radius: Theme.cardRadius
           color: card.down ? Theme.primaryLight : Theme.card
@@ -97,7 +95,7 @@ Flickable {
               font.pixelSize: Theme.labelSize
             }
             AppText {
-              text: card.modelData.chargerCode + ' · ' + Number(card.modelData.energyKwh || 0).toFixed(2) + ' 度 · ' + Math.floor(Number(card.modelData.durationSeconds || 0) / 60) + ' 分钟'
+              text: card.modelData.chargerCode + ' · ' + card.modelData.energyKwh.toFixed(2) + ' 度 · ' + Math.floor(card.modelData.durationSeconds / 60) + ' 分钟'
               color: Theme.muted
               font.pixelSize: Theme.labelSize
             }
@@ -111,7 +109,7 @@ Flickable {
             width: parent.width
             MoneyText {
               Layout.fillWidth: true
-              cents: Number(card.modelData.amountCents || 0)
+              cents: card.modelData.amountCents
             }
             AppText {
               text: card.modelData.status === 'paid' || card.modelData.status === 'cancelled' ? '查看小票' : '继续处理'

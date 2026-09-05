@@ -5,14 +5,7 @@ import type { Station } from '../types/dashboard'
 import { firstTooltipItem, type ChartEvent } from '../lib/echarts'
 const props = defineProps<{ stations: Station[]; modelValue?: number }>()
 const emit = defineEmits<{ 'update:modelValue': [id: number] }>()
-const selected = computed(
-  () => props.stations.find((station) => station.id === props.modelValue) ?? props.stations[0],
-)
-const plottedStations = computed(() =>
-  props.stations.filter(
-    (station) => Number.isFinite(station.longitude) && Number.isFinite(station.latitude),
-  ),
-)
+const selected = computed(() => props.stations.find((station) => station.id === props.modelValue))
 const element = useChart(
   () => ({
     grid: { left: 58, right: 54, top: 35, bottom: 55 },
@@ -20,7 +13,8 @@ const element = useChart(
       trigger: 'item',
       renderMode: 'richText',
       formatter: (params) => {
-        const station = plottedStations.value[firstTooltipItem(params)?.dataIndex ?? 0]
+        const point = firstTooltipItem(params)
+        const station = point && props.stations[point.dataIndex]
         return station
           ? `${station.name}\n${station.region} · ${station.idleChargers}/${station.totalChargers} 台空闲\n${station.latitude.toFixed(4)}° N / ${station.longitude.toFixed(4)}° E`
           : ''
@@ -58,7 +52,7 @@ const element = useChart(
         rippleEffect: { brushType: 'stroke', scale: 3, period: 5 },
         animation: !matchMedia('(prefers-reduced-motion: reduce)').matches,
         symbolSize: (_value, params) =>
-          12 + Math.min(10, plottedStations.value[params.dataIndex]?.totalChargers ?? 0),
+          12 + Math.min(10, props.stations[params.dataIndex].totalChargers),
         label: {
           show: true,
           position: 'top',
@@ -71,7 +65,7 @@ const element = useChart(
         },
         labelLayout: { hideOverlap: true },
         itemStyle: { shadowBlur: 18, shadowColor: '#17d9f9' },
-        data: plottedStations.value.map((station) => ({
+        data: props.stations.map((station) => ({
           name: station.name,
           value: [station.longitude, station.latitude, station.totalChargers],
           itemStyle: {
@@ -85,8 +79,7 @@ const element = useChart(
   }),
   (chart) => {
     chart.on('click', 'series.effectScatter', (params: ChartEvent) => {
-      const station = plottedStations.value[params.dataIndex]
-      if (station) emit('update:modelValue', station.id)
+      emit('update:modelValue', props.stations[params.dataIndex].id)
     })
   },
 )

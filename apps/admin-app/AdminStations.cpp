@@ -20,8 +20,7 @@
 using namespace adminui;
 
 void AdminMainWindow::Impl::buildStations() {
-  QVBoxLayout *layout;
-  page("充电站管理", &layout);
+  auto *layout = page("充电站管理");
   auto *row = new QHBoxLayout;
   stationSearch = new QLineEdit;
   stationSearch->setPlaceholderText("按站名、区域或详细地址筛选");
@@ -350,8 +349,7 @@ void AdminMainWindow::Impl::stationDetail(const QJsonObject &station) {
 }
 
 void AdminMainWindow::Impl::buildChargers() {
-  QVBoxLayout *layout;
-  page("充电桩管理", &layout);
+  auto *layout = page("充电桩管理");
   auto *filters = new QHBoxLayout;
   chargerSearch = new QLineEdit;
   chargerSearch->setObjectName("chargerSearch");

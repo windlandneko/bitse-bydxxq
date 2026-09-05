@@ -1,38 +1,33 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { Station } from '../types/dashboard'
 
 const props = defineProps<{ stations: Station[]; modelValue?: number }>()
 const emit = defineEmits<{ 'update:modelValue': [id: number] }>()
 const list = ref<HTMLDivElement>()
 const firstVisible = ref(0)
-let observer: ResizeObserver | undefined
 const rows = computed(() =>
   props.stations.map((station) => {
-    const total = Math.max(0, station.totalChargers)
-    const idle = Math.max(0, Math.min(total, station.idleChargers))
+    const total = station.totalChargers
+    const idle = station.idleChargers
     // The API's onlineRate is calculated from an integer count without rounding.
     // Reserved and charging are only available together at station level.
-    const online = Math.max(idle, Math.min(total, Math.round((total * station.onlineRate) / 100)))
+    const online = Math.round((total * station.onlineRate) / 100)
     return { ...station, total, idle, occupied: online - idle, unavailable: total - online }
   }),
 )
-const selectedId = computed(() =>
-  rows.value.some((station) => station.id === props.modelValue)
-    ? props.modelValue
-    : rows.value[0]?.id,
+const selectedIndex = computed(() =>
+  props.stations.findIndex((station) => station.id === props.modelValue),
 )
 const lastVisible = computed(() => Math.min(firstVisible.value + 5, rows.value.length))
 function description(station: (typeof rows.value)[number]) {
   return `${station.name}：空闲 ${station.idle} 台，在用或预约 ${station.occupied} 台，暂不可用 ${station.unavailable} 台，共 ${station.total} 台`
 }
 function syncScroll() {
-  if (!list.value?.firstElementChild) {
-    firstVisible.value = 0
-    return
-  }
-  const step = (list.value.firstElementChild as HTMLElement).offsetWidth + 8
-  firstVisible.value = Math.round(list.value.scrollLeft / step)
+  const viewport = list.value
+  firstVisible.value = viewport
+    ? Math.round((viewport.scrollLeft * 5) / (viewport.clientWidth + 8))
+    : 0
 }
 function move(direction: number) {
   if (!list.value) return
@@ -42,32 +37,20 @@ function move(direction: number) {
   })
 }
 watch(
-  [selectedId, list],
-  ([id, viewport]) => {
-    const item = viewport?.querySelector<HTMLElement>(`[data-station-id="${id}"]`)?.parentElement
-    if (!viewport || !item) return
-    const left = item.offsetLeft - viewport.offsetLeft
-    const right = left + item.offsetWidth
-    if (left < viewport.scrollLeft) viewport.scrollLeft = left
-    else if (right > viewport.scrollLeft + viewport.clientWidth)
-      viewport.scrollLeft = right - viewport.clientWidth
+  [selectedIndex, list],
+  ([index, viewport]) => {
+    const item = viewport?.children[index] as HTMLElement | undefined
+    if (viewport && item) {
+      const left = item.offsetLeft - viewport.offsetLeft
+      const right = left + item.offsetWidth
+      if (left < viewport.scrollLeft) viewport.scrollLeft = left
+      else if (right > viewport.scrollLeft + viewport.clientWidth)
+        viewport.scrollLeft = right - viewport.clientWidth
+    }
+    syncScroll()
   },
   { flush: 'post' },
 )
-watch(list, (element) => {
-  observer?.disconnect()
-  if (element) observer?.observe(element)
-  syncScroll()
-})
-watch(rows, async () => {
-  await nextTick()
-  syncScroll()
-})
-onMounted(() => {
-  observer = new ResizeObserver(syncScroll)
-  if (list.value) observer.observe(list.value)
-})
-onBeforeUnmount(() => observer?.disconnect())
 </script>
 
 <template>
@@ -93,8 +76,8 @@ onBeforeUnmount(() => observer?.disconnect())
       <div v-for="station in rows" :key="station.id" class="capacity-item" role="listitem">
         <button
           :data-station-id="station.id"
-          :class="{ 'is-selected': selectedId === station.id }"
-          :aria-pressed="selectedId === station.id"
+          :class="{ 'is-selected': modelValue === station.id }"
+          :aria-pressed="modelValue === station.id"
           :aria-label="description(station)"
           :title="description(station)"
           @click="emit('update:modelValue', station.id)"

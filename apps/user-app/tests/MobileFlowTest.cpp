@@ -6,6 +6,7 @@
 #include <QDir>
 #include <QFontDatabase>
 #include <QLabel>
+#include <QMetaProperty>
 #include <QPushButton>
 #include <QQuickItem>
 #include <QQuickWidget>
@@ -40,6 +41,8 @@ class MobileFlowTest final : public QObject {
   }
 
   void click(UserMainWindow &window, const char *name) {
+    // Loader releases the previous screen with deleteLater().
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
     auto *button = item(window, name);
     QVERIFY2(button, name);
     QVERIFY2(button->property("enabled").toBool(), name);
@@ -216,6 +219,38 @@ private slots:
     QTRY_VERIFY_WITH_TIMEOUT(!controller->stations().isEmpty(), 10000);
     QCOMPARE(controller->page(), QString("home"));
     capture(window, "02-home");
+    QVERIFY(!item(window, "stationCard_0"));
+    auto *recommendation = item(window, "recommendedStationLoader");
+    QVERIFY(recommendation);
+    QVERIFY(!recommendation->property("active").toBool());
+    QVERIFY(!recommendation->property("item").value<QObject *>());
+    const auto
+      firstId = controller->stations().first().toMap().value("id").toInt();
+    auto *stationCard = item(
+      window, qPrintable("stationCard_" + QString::number(firstId)));
+    QVERIFY(stationCard);
+    const int highlightedIndex = stationCard->metaObject()->indexOfProperty(
+      "highlighted");
+    QVERIFY(highlightedIndex >= 0);
+    const auto highlighted = stationCard->metaObject()->property(
+      highlightedIndex);
+    QVERIFY(highlighted.isWritable());
+    QVERIFY(highlighted.write(stationCard, true));
+    QCOMPARE(stationCard->property("highlighted").toBool(), true);
+    verifyLayout(window);
+    QVERIFY(highlighted.write(stationCard, false));
+
+    auto *homeTab = qobject_cast<QQuickItem *>(item(window, "tab_home"));
+    QVERIFY(homeTab);
+    QSignalSpy pageChanges(controller, &MobileController::pageChanged);
+    const auto homeCenter = homeTab->mapToItem(
+      window.quickView()->rootObject(),
+      QPointF(homeTab->width() / 2, homeTab->height() / 2));
+    QTest::mouseClick(window.quickView(), Qt::LeftButton, Qt::NoModifier,
+                      homeCenter.toPoint());
+    QCOMPARE(controller->page(), QString("home"));
+    QCOMPARE(homeTab->property("highlighted").toBool(), true);
+    QCOMPARE(pageChanges.count(), 0);
 
     controller->selectTab("profile");
     click(window, "walletRechargeButton");
@@ -282,6 +317,9 @@ private slots:
     const auto remaining = countdown->property("text").toString();
     QTRY_VERIFY_WITH_TIMEOUT(
       countdown->property("text").toString() != remaining, 2000);
+    controller->selectTab("home");
+    click(window, "activeOrderBanner");
+    QCOMPARE(controller->page(), QString("charge"));
     click(window, "cancelReservationButton");
     click(window, "confirmOrderActionButton");
     QTRY_COMPARE_WITH_TIMEOUT(
@@ -345,6 +383,18 @@ private slots:
     QTRY_COMPARE(recovery.controller()->page(), QString("orders"));
     QTRY_COMPARE_WITH_TIMEOUT(recovery.controller()->orders().size(), 2, 10000);
     capture(recovery, "09-orders");
+    auto *ordersPage = item(recovery, "ordersPage");
+    QVERIFY(ordersPage);
+    const auto paidCardName = "orderCard_"
+                            + recovery.controller()
+                                ->viewedOrder()
+                                .value("id")
+                                .toString();
+    QVERIFY(ordersPage->setProperty("filter", "active"));
+    QVERIFY(!item(recovery, qPrintable(paidCardName)));
+    QVERIFY(ordersPage->setProperty("filter", "paid"));
+    QVERIFY(item(recovery, qPrintable(paidCardName)));
+    QVERIFY(ordersPage->setProperty("filter", "all"));
     recovery.controller()->selectTab("profile");
     click(recovery, "logoutButton");
     click(recovery, "confirmLogoutButton");

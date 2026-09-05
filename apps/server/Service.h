@@ -47,6 +47,8 @@ private:
   void finishOrder(qint64 id, const QString &reason);
   void geocode(quint64 requestId, const QJsonObject &params);
   void runForecast();
+  void stopForecast();
+  void importForecast(const QDateTime &origin);
   QJsonObject forecasts() const;
   void audit(const Principal &actor, const QString &action,
              const QString &target, const QString &detail);
