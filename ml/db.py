@@ -21,7 +21,7 @@ def connect(db_path) -> sqlite3.Connection:
 
 
 def load_stations(conn: sqlite3.Connection) -> pd.DataFrame:
-    """返回站点及其桩况：总桩数 / 故障桩数 / 平均额定功率(kW)。"""
+    """返回站点及其桩况：总桩数 / 不可用桩数 / 平均额定功率(kW)。"""
     sql = """
         SELECT
             s.id        AS station_id,
@@ -29,6 +29,8 @@ def load_stations(conn: sqlite3.Connection) -> pd.DataFrame:
             s.station_code AS station_code,
             COUNT(c.id) AS total_chargers,
             SUM(CASE WHEN c.status = 'fault' THEN 1 ELSE 0 END) AS fault_chargers,
+            SUM(CASE WHEN c.status IN ('fault', 'offline', 'maintenance')
+                     THEN 1 ELSE 0 END) AS unavailable_chargers,
             AVG(c.rated_power_kw) AS avg_charger_power_kw
         FROM stations s
         LEFT JOIN chargers c ON c.station_id = s.id
@@ -38,7 +40,12 @@ def load_stations(conn: sqlite3.Connection) -> pd.DataFrame:
     """
     df = pd.read_sql_query(sql, conn)
     # LEFT JOIN 未匹配时可能出现 NULL，归一化避免后续计算报错
-    for col in ("total_chargers", "fault_chargers", "avg_charger_power_kw"):
+    for col in (
+        "total_chargers",
+        "fault_chargers",
+        "unavailable_chargers",
+        "avg_charger_power_kw",
+    ):
         df[col] = df[col].fillna(0).astype(float)
     return df
 

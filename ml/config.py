@@ -14,8 +14,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 MODEL_DIR = REPO_ROOT / "ml" / "models"
 MODEL_PATH = MODEL_DIR / "load_rf.pkl"
 
-# 默认数据库文件：与两个 Qt 客户端共用同一份 SQLite 文件
-DEFAULT_DB_PATH = REPO_ROOT / "charge_platform.db"
+# 默认数据库文件：与两个 Qt 客户端和 Web 导出脚本共用同一份 SQLite 文件
+DEFAULT_DB_PATH = REPO_ROOT / "database" / "charge_platform.db"
 
 # 可复现性（UC-M-04）：固定随机种子
 RANDOM_SEED = 42

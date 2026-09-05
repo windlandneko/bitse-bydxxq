@@ -1,7 +1,7 @@
 """评估模式（UC-M-02）：对已训练模型做留出集评估，并与朴素基线对比。
 
 用法：
-    python -m ml.evaluate --db charge_platform.db [--model ml/models/load_rf.pkl] [--seed 42]
+    python -m ml.evaluate --db database/charge_platform.db [--model ml/models/load_rf.pkl] [--seed 42]
 """
 from __future__ import annotations
 
@@ -16,7 +16,12 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="评估负荷预测模型")
     parser.add_argument("--db", default=str(config.DEFAULT_DB_PATH), help="SQLite 数据库路径")
     parser.add_argument("--model", default=str(config.MODEL_PATH), help="训练产物路径")
-    parser.add_argument("--seed", type=int, default=config.RANDOM_SEED, help="随机种子")
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="随机种子；省略时使用模型产物中的训练种子",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -25,9 +30,15 @@ def main(argv=None) -> int:
         print(f"未找到模型产物 {args.model}，请先运行 `python -m ml.train`。")
         return 1
 
+    seed = artifact.get("seed", config.RANDOM_SEED) if args.seed is None else args.seed
+
     conn = db.connect(args.db)
     try:
-        frame, stations = dataset.build_training_frame(conn, args.seed)
+        frame, stations = dataset.build_training_frame(
+            conn,
+            seed,
+            artifact.get("weather_seed", config.WEATHER_SEED),
+        )
     finally:
         conn.close()
 
@@ -62,12 +73,8 @@ def main(argv=None) -> int:
 
     # 分站 MAE 概览
     test_f["pred"] = y_pred
-    per_station = (
-        test_f.groupby("station_id")
-        .apply(
-            lambda g: model.mean_absolute_error(g["load_kw"], g["pred"]),
-            include_groups=False,
-        )
+    per_station = test_f.groupby("station_id")[["load_kw", "pred"]].apply(
+        lambda g: model.mean_absolute_error(g["load_kw"], g["pred"])
     )
     print("\n分站 MAE (kW)：")
     for sid, mae in per_station.items():

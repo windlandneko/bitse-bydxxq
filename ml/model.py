@@ -14,13 +14,17 @@ from sklearn.ensemble import RandomForestRegressor
 from . import config
 
 
-def train_model(X: np.ndarray, y: np.ndarray) -> RandomForestRegressor:
+def train_model(
+    X: np.ndarray,
+    y: np.ndarray,
+    random_state: int = config.RANDOM_SEED,
+) -> RandomForestRegressor:
     """训练随机森林回归模型（固定随机种子以保证可复现）。"""
     model = RandomForestRegressor(
         n_estimators=200,
         max_depth=None,
         min_samples_leaf=2,
-        random_state=config.RANDOM_SEED,
+        random_state=random_state,
         n_jobs=-1,
     )
     model.fit(X, y)

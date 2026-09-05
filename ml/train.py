@@ -1,7 +1,7 @@
 """训练模式（UC-M-02 / UC-M-04）：训练随机森林模型并保存产物。
 
 用法：
-    python -m ml.train --db charge_platform.db [--output ml/models/load_rf.pkl] [--seed 42]
+    python -m ml.train --db database/charge_platform.db [--output ml/models/load_rf.pkl] [--seed 42]
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ def train_artifact(conn, seed: int) -> dict:
     X_train, y_train = dataset.encode_frame(train_f, station_ids, feature_names)
     X_test, y_test = dataset.encode_frame(test_f, station_ids, feature_names)
 
-    rf = model.train_model(X_train, y_train)
+    rf = model.train_model(X_train, y_train, random_state=seed)
     y_pred = model.predict(rf, X_test)
     # 朴素基线：直接用「上周同一时刻」的负荷（lag_168）
     baseline_pred = test_f["lag_168"].to_numpy(dtype=float)
@@ -45,6 +45,7 @@ def train_artifact(conn, seed: int) -> dict:
             "name": st.get("name", ""),
             "total_chargers": int(st["total_chargers"]),
             "fault_chargers": int(st["fault_chargers"]),
+            "unavailable_chargers": int(st["unavailable_chargers"]),
             "avg_charger_power_kw": float(st["avg_charger_power_kw"]),
             "peak_threshold_kw": float(peak_by_station.get(sid, 0.0) or 0.0),
         }
@@ -56,6 +57,7 @@ def train_artifact(conn, seed: int) -> dict:
         "station_meta": station_meta,
         "model_version": config.MODEL_VERSION,
         "seed": seed,
+        "weather_seed": config.WEATHER_SEED,
         "trained_at": db.now_utc_iso(),
         "metrics": {"model": metrics_model, "baseline": metrics_baseline},
         "n_train": int(len(X_train)),

@@ -33,10 +33,10 @@ ml/
 项目约定使用 `uv` 管理 Python 依赖（见仓库 README）。二选一：
 
 ```bash
-# 方式 A：uv
-cd ml && uv sync
+# 方式 A：uv（在仓库根目录执行）
+uv sync --project ml
 
-# 方式 B：pip
+# 方式 B：pip（在仓库根目录执行）
 python3 -m pip install -r ml/requirements.txt
 ```
 
@@ -48,18 +48,22 @@ python3 -m pip install -r ml/requirements.txt
 
 ```bash
 # 1. 训练：生成模型并打印指标
-python -m ml.train --db charge_platform.db
+uv run --project ml python -m ml.train --db database/charge_platform.db
 
 # 2. 评估：留出集指标 + 基线对比（需先训练）
-python -m ml.evaluate --db charge_platform.db
+uv run --project ml python -m ml.evaluate --db database/charge_platform.db
 
 # 3. 预测：预测未来 1/6/24 小时并回写 load_forecasts
-python -m ml.predict --db charge_platform.db
+uv run --project ml python -m ml.predict --db database/charge_platform.db
 ```
 
-`--db` 默认指向仓库根目录的 `charge_platform.db`，应与两个 Qt 客户端共用同一份
-数据库文件。首次运行前请先初始化数据库（`database/schema.sql` + `database/seed.sql`，
-或启动应用自动建库）。
+`--db` 默认指向 `database/charge_platform.db`，应与两个 Qt 客户端共用同一份数据库文件。
+首次运行前请先初始化数据库：
+
+```bash
+sqlite3 database/charge_platform.db < database/schema.sql
+sqlite3 database/charge_platform.db < database/seed.sql
+```
 
 `--horizons 1,6,24` 可调整预测时距；`--seed` 可覆盖随机种子。
 

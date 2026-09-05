@@ -1,7 +1,7 @@
 """预测模式（UC-M-03）：加载模型，预测未来负荷并回写 load_forecasts。
 
 用法：
-    python -m ml.predict --db charge_platform.db [--model ml/models/load_rf.pkl]
+    python -m ml.predict --db database/charge_platform.db [--model ml/models/load_rf.pkl]
                          [--horizons 1,6,24]
 """
 from __future__ import annotations
@@ -27,12 +27,35 @@ def main(argv=None) -> int:
     artifact = model.load_artifact(args.model)
     conn = db.connect(args.db)
     try:
-        frame, _stations = dataset.build_training_frame(conn, artifact["seed"])
+        frame, stations = dataset.build_training_frame(
+            conn,
+            artifact.get("seed", config.RANDOM_SEED),
+            artifact.get("weather_seed", config.WEATHER_SEED),
+        )
         frame_station_ids = set(frame["station_id"].astype(int).unique())
         station_ids = [sid for sid in artifact["station_ids"] if sid in frame_station_ids]
 
+        # Station capacity/status can change after training; use current DB
+        # metadata for charger availability while retaining the model artifact
+        # for feature columns and thresholds.
+        station_meta = {
+            int(sid): dict(meta)
+            for sid, meta in artifact.get("station_meta", {}).items()
+        }
+        for _, station in stations.iterrows():
+            sid = int(station["station_id"])
+            station_meta.setdefault(sid, {}).update(
+                {
+                    "total_chargers": int(station["total_chargers"]),
+                    "fault_chargers": int(station["fault_chargers"]),
+                    "unavailable_chargers": int(station["unavailable_chargers"]),
+                    "avg_charger_power_kw": float(station["avg_charger_power_kw"]),
+                }
+            )
+        runtime_artifact = {**artifact, "station_meta": station_meta}
+
         rows, origin = dataset.forecast_loads(
-            artifact, frame, station_ids, horizons
+            runtime_artifact, frame, station_ids, horizons
         )
         written = db.write_forecasts(conn, rows)
     finally:

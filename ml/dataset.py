@@ -85,13 +85,16 @@ def generate_synthetic_history(
     stations: pd.DataFrame,
     hours: pd.DatetimeIndex,
     seed: int,
+    weather_seed: int = config.WEATHER_SEED,
 ) -> pd.DataFrame:
     """生成各站在 hours 上的逐小时合成负荷（含天气列）。
 
     演示种子数据过于稀疏（每站每天仅一单），不足以反映真实站点负荷量级，
     因此按桩容量估算各站高峰负荷，生成确定性的日内峰谷曲线（单位 kW）。
     """
-    temp, precip = _weather(hours, seed)
+    # Keep weather independent from the synthetic-load noise seed.  The same
+    # fixed weather series must be used while training and forecasting.
+    temp, precip = _weather(hours, weather_seed)
     wf = _weather_factor(temp, precip)
     hour_arr = hours.hour.to_numpy()
     dow_arr = hours.dayofweek.to_numpy()
@@ -150,13 +153,19 @@ def _add_lag_features(frame: pd.DataFrame) -> pd.DataFrame:
     frame = frame.sort_values(["station_id", "ts"]).copy()
     for lag in (1, 24, 168):
         frame[f"lag_{lag}"] = frame.groupby("station_id")["load_kw"].shift(lag)
+    # The current load is the label, so it must not be part of a feature.
+    # Forecasting uses the previous 24 hours as well.
     frame["rolling_mean_24"] = frame.groupby("station_id")["load_kw"].transform(
-        lambda s: s.rolling(24, min_periods=1).mean()
+        lambda s: s.shift(1).rolling(24, min_periods=1).mean()
     )
     return frame
 
 
-def build_training_frame(conn, seed: int) -> tuple[pd.DataFrame, pd.DataFrame]:
+def build_training_frame(
+    conn,
+    seed: int,
+    weather_seed: int = config.WEATHER_SEED,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """构造完整训练帧：真实负荷 + 合成负荷 + 全部特征。
 
     返回 (frame, stations)，frame 含数值特征与 load_kw，已按 (station_id, ts) 排序。
@@ -164,9 +173,13 @@ def build_training_frame(conn, seed: int) -> tuple[pd.DataFrame, pd.DataFrame]:
     stations = db.load_stations(conn)
     real = db.load_hourly_load(conn)
     start, end = _time_window(real)
+    # A static demo database may be older than the day on which the command is
+    # run. Extend the deterministic synthetic history to the current UTC hour
+    # so the generated horizons are genuinely in the future.
+    end = max(end, pd.Timestamp.now(tz="UTC").floor("h"))
     hours = pd.date_range(start, end, freq="h", tz="UTC")
 
-    synthetic = generate_synthetic_history(stations, hours, seed)
+    synthetic = generate_synthetic_history(stations, hours, seed, weather_seed)
 
     # 真实观测叠加到合成基线之上（真实数据仍进入训练集）
     if real is not None and not real.empty:
@@ -218,9 +231,10 @@ def _feature_vector(
     sid: int,
     t: pd.Timestamp,
     load_map: dict[pd.Timestamp, float],
+    weather_seed: int,
 ) -> dict[str, float]:
     """为 (sid, t) 构造数值特征字典（不含电站 one-hot）。"""
-    temp, precip = _weather(pd.DatetimeIndex([t]), config.WEATHER_SEED)
+    temp, precip = _weather(pd.DatetimeIndex([t]), weather_seed)
     lag = lambda h: load_map.get(t - pd.Timedelta(hours=h), 0.0)
     window = [load_map.get(t - pd.Timedelta(hours=h), 0.0) for h in range(24, 0, -1)]
     return {
@@ -249,6 +263,7 @@ def forecast_loads(
     """
     model = artifact["model"]
     feature_names = artifact["feature_names"]
+    weather_seed = artifact.get("weather_seed", config.WEATHER_SEED)
 
     # 历史负荷序列（含合成基线），供滞后特征查询
     load_map: dict[int, dict[pd.Timestamp, float]] = {}
@@ -267,7 +282,7 @@ def forecast_loads(
     for i in range(1, max_h + 1):
         t = origin + pd.Timedelta(hours=i)
         for sid in station_ids:
-            numeric = _feature_vector(sid, t, load_map[sid])
+            numeric = _feature_vector(sid, t, load_map[sid], weather_seed)
             vec = encode_one(sid, numeric, station_ids, feature_names).reshape(1, -1)
             load = max(0.0, float(model.predict(vec)[0]))
             load_map[sid][t] = load
@@ -290,6 +305,7 @@ def _forecast_row(
     meta = artifact["station_meta"].get(sid, {})
     total = int(meta.get("total_chargers", 0))
     fault = int(meta.get("fault_chargers", 0))
+    unavailable = int(meta.get("unavailable_chargers", fault) or 0)
     avg_power = float(meta.get("avg_charger_power_kw", 0.0) or 0.0)
     peak_threshold = float(meta.get("peak_threshold_kw", 0.0) or 0.0)
 
@@ -297,7 +313,7 @@ def _forecast_row(
         busy = math.ceil(load / avg_power)
     else:
         busy = 0
-    available = max(0, min(total - fault, total - fault - busy))
+    available = max(0, min(total - unavailable, total - unavailable - busy))
 
     return {
         "station_id": sid,
