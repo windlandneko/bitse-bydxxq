@@ -4,45 +4,49 @@ import QtQuick.Controls 2.15
 Flickable {
   objectName: 'editProfilePage'
   contentWidth: width
-  contentHeight: content.height + 32
+  contentHeight: content.height + Theme.pagePadding * 2
   boundsBehavior: Flickable.StopAtBounds
   clip: true
+  ScrollBar.vertical: ScrollBar {
+    policy: ScrollBar.AsNeeded
+  }
   Column {
     id: content
-    x: 22
-    y: 20
-    width: parent.width - 44
-    spacing: 27
+    x: Theme.pagePadding
+    y: Theme.pagePadding
+    width: parent.width - Theme.pagePadding * 2
+    spacing: Theme.sectionSpace
     Column {
       width: parent.width
-      spacing: 14
-      Rectangle {
+      spacing: Theme.space
+      Button {
+        id: avatarButton
+        objectName: 'chooseAvatarButton'
         anchors.horizontalCenter: parent.horizontalCenter
-        width: 98
-        height: 98
-        radius: 33
-        color: '#e5e9e2'
-        clip: true
-        Image {
-          anchors.centerIn: parent
-          width: mobile.avatarSource ? 98 : 42
-          height: width
-          source: mobile.avatarSource || 'qrc:/icons/user.svg'
-          fillMode: Image.PreserveAspectCrop
-          opacity: mobile.avatarSource ? 1 : 0.4
+        width: 96
+        height: 96
+        padding: 12
+        enabled: !mobile.busy
+        Accessible.name: '更换头像'
+        onClicked: mobile.chooseAvatar()
+        background: Rectangle {
+          radius: Theme.heroRadius
+          color: avatarButton.down ? '#d3e1d1' : '#e5e9e2'
+          border.width: avatarButton.visualFocus ? 2 : 0
+          border.color: Theme.primary
         }
-        MouseArea {
-          objectName: 'chooseAvatarButton'
-          anchors.fill: parent
-          onClicked: mobile.chooseAvatar()
+        contentItem: Image {
+          source: mobile.avatarSource || 'qrc:/icons/user.svg'
+          sourceSize.width: 144
+          sourceSize.height: 144
+          fillMode: Image.PreserveAspectFit
+          opacity: mobile.avatarSource ? 1 : 0.5
         }
       }
       ActionButton {
         anchors.horizontalCenter: parent.horizontalCenter
-        height: 32
         text: '更换头像'
         tone: 'quiet'
-        font.pixelSize: 12
         enabled: !mobile.busy
         onClicked: mobile.chooseAvatar()
       }
@@ -51,16 +55,16 @@ Flickable {
         text: 'PNG / JPEG，最大 2 MB'
         horizontalAlignment: Text.AlignHCenter
         color: Theme.muted
-        font.pixelSize: 10
+        font.pixelSize: Theme.labelSize
       }
     }
     Column {
       width: parent.width
-      spacing: 11
+      spacing: Theme.space
       AppText {
         text: '昵称'
-        font.pixelSize: 14
-        font.weight: Font.DemiBold
+        font.pixelSize: Theme.bodyLargeSize
+        font.weight: Font.Medium
       }
       AppField {
         id: nickname
@@ -68,32 +72,34 @@ Flickable {
         width: parent.width
         Component.onCompleted: text = mobile.user.nickname || ''
         maximumLength: 24
-        placeholderText: '给自己起个好听的名字'
+        placeholderText: '请输入昵称'
+        Accessible.name: '昵称'
         onAccepted: mobile.updateNickname(text)
       }
       AppText {
         text: '1 至 24 个字符'
-        font.pixelSize: 11
+        font.pixelSize: Theme.labelSize
         color: Theme.muted
       }
     }
     Column {
       width: parent.width
-      spacing: 11
+      spacing: Theme.space
       AppText {
         text: '手机号'
-        font.pixelSize: 14
-        font.weight: Font.DemiBold
+        font.pixelSize: Theme.bodyLargeSize
+        font.weight: Font.Medium
       }
       AppField {
         width: parent.width
         text: mobile.user.phone || ''
         readOnly: true
         color: Theme.muted
+        Accessible.name: '登录手机号，不可修改'
       }
       AppText {
         text: '手机号用于登录，暂不支持修改'
-        font.pixelSize: 11
+        font.pixelSize: Theme.labelSize
         color: Theme.muted
       }
     }

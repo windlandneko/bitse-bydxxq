@@ -2,6 +2,7 @@
 #include "MobileController.h"
 
 #include <QComboBox>
+#include <QIcon>
 #include <QLabel>
 #include <QPushButton>
 #include <QQmlContext>
@@ -58,29 +59,51 @@ void UserMainWindow::createMapPage() {
   m_mapPage = new QWidget(m_pages);
   m_mapPage->setObjectName("navigationPage");
   m_mapPage->setStyleSheet(
-    "QWidget#navigationPage { background: #f6f7f3; color: #182821; }"
-    "QPushButton { border: none; border-radius: 12px; padding: 12px; "
-    "background: #e6eee7; color: #225643; font-weight: 600; }"
+    "QWidget#navigationPage { background: #f6f7f3; color: #192e24; }"
+    "QPushButton { border: 2px solid transparent; border-radius: 16px; "
+    "padding: 8px 16px; background: #e5efe7; color: #245b43; font-size: 14px; "
+    "font-weight: 500; }"
+    "QPushButton:pressed { background: #d4e4d5; }"
+    "QPushButton:focus { border-color: #245b43; }"
+    "QPushButton:disabled { background: #e2e7df; color: #879286; }"
+    "QPushButton#mapBackButton { padding: 0; border-radius: 24px; background: "
+    "transparent; }"
+    "QPushButton#mapBackButton:pressed { background: #d4e4d5; }"
     "QPushButton#routeButton { background: #245b43; color: white; }"
-    "QComboBox { border: 1px solid #dce5dd; border-radius: 10px; padding: "
-    "10px; background: white; }"
-    "QLabel { background: transparent; }");
+    "QPushButton#routeButton:pressed { background: #174a33; }"
+    "QPushButton#routeButton:focus { border-color: #d9ee89; }"
+    "QComboBox { border: 1px solid #e0e7de; border-radius: 16px; padding: 8px "
+    "16px; "
+    "background: white; color: #192e24; font-size: 14px; }"
+    "QComboBox:focus { border: 2px solid #245b43; }"
+    "QComboBox::drop-down { width: 40px; border: none; }"
+    "QComboBox::down-arrow { image: url(:/icons/chevron-down.svg); width: "
+    "24px; height: 24px; }"
+    "QComboBox QAbstractItemView::item { min-height: 48px; }"
+    "QLabel { background: transparent; color: #192e24; }");
   auto *layout = new QVBoxLayout(m_mapPage);
-  layout->setContentsMargins(18, 18, 18, 14);
-  layout->setSpacing(12);
-  auto *header = new QHBoxLayout;
-  auto *back = new QPushButton("‹ 返回", m_mapPage);
+  layout->setContentsMargins(16, 0, 16, 16);
+  layout->setSpacing(16);
+  auto *headerWidget = new QWidget(m_mapPage);
+  headerWidget->setFixedHeight(64);
+  auto *header = new QHBoxLayout(headerWidget);
+  header->setContentsMargins(0, 0, 0, 0);
+  header->setSpacing(8);
+  auto *back = new QPushButton(m_mapPage);
   back->setObjectName("mapBackButton");
+  back->setIcon(QIcon(":/icons/arrow-left.svg"));
+  back->setIconSize(QSize(24, 24));
+  back->setFixedSize(48, 48);
+  back->setAccessibleName("返回电站页面");
+  back->setToolTip("返回电站页面");
   auto *title = new QLabel("路线导航", m_mapPage);
   auto titleFont = title->font();
-  titleFont.setPointSize(16);
-  titleFont.setBold(true);
+  titleFont.setPixelSize(22);
+  titleFont.setWeight(QFont::DemiBold);
   title->setFont(titleFont);
   header->addWidget(back);
-  header->addStretch();
-  header->addWidget(title);
-  header->addStretch();
-  layout->addLayout(header);
+  header->addWidget(title, 1);
+  layout->addWidget(headerWidget);
   connect(back, &QPushButton::clicked, this, [this] {
     m_map->stop();
     m_pages->setCurrentWidget(m_quick);
@@ -88,15 +111,20 @@ void UserMainWindow::createMapPage() {
   m_routeDescription = new QLabel(m_mapPage);
   m_routeDescription->setWordWrap(true);
   m_routeDescription->setTextFormat(Qt::PlainText);
-  m_routeDescription->setStyleSheet("font-size: 14px; line-height: 1.6;");
+  m_routeDescription->setStyleSheet("font-size: 14px;");
   layout->addWidget(m_routeDescription);
   auto *options = new QHBoxLayout;
+  options->setSpacing(16);
   m_routeMode = new QComboBox(m_mapPage);
   m_routeMode->setObjectName("routeMode");
+  m_routeMode->setMinimumHeight(48);
+  m_routeMode->setAccessibleName("选择驾车或步行");
   m_routeMode->addItem("驾车出行", "drive");
   m_routeMode->addItem("步行前往", "walk");
   auto *route = new QPushButton("开始导航", m_mapPage);
   route->setObjectName("routeButton");
+  route->setMinimumHeight(48);
+  route->setAccessibleName("开始腾讯地图导航");
   options->addWidget(m_routeMode, 1);
   options->addWidget(route, 1);
   layout->addLayout(options);
@@ -104,7 +132,7 @@ void UserMainWindow::createMapPage() {
   m_mapStatus = new QLabel("选择出行方式，点击开始导航", m_mapPage);
   m_mapStatus->setObjectName("mapStatus");
   m_mapStatus->setWordWrap(true);
-  m_mapStatus->setStyleSheet("font-size: 12px; color: #6c7b70;");
+  m_mapStatus->setStyleSheet("font-size: 12px; color: #65746a;");
   layout->addWidget(m_mapStatus);
   m_map = new QWebEngineView(m_mapPage);
   m_map->setObjectName("tencentMapView");

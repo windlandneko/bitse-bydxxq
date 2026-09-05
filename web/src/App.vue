@@ -8,10 +8,17 @@ import KpiCards from './components/KpiCards.vue'
 import RevenueTrend from './components/RevenueTrend.vue'
 import StationRanking from './components/StationRanking.vue'
 import StationMap from './components/StationMap.vue'
+import StationCapacity from './components/StationCapacity.vue'
 import StatusDonut from './components/StatusDonut.vue'
 import { useDashboardData } from './composables/useDashboardData'
 const { data, loading, error, lastSuccessAt, stale, refresh } = useDashboardData()
 const clock = ref(new Date())
+const selectedStationId = ref<number>()
+const operationalEvents = computed(() =>
+  data.value.recentEvents
+    .filter((event) => !['负荷预测更新', '演示环境初始化'].includes(event.action))
+    .slice(0, 3),
+)
 const viewport = ref({ width: window.innerWidth, height: window.innerHeight })
 const scale = computed(() => Math.min(viewport.value.width / 1920, viewport.value.height / 1080))
 const fit = computed(() => ({ transform: `translate(-50%, -50%) scale(${scale.value})` }))
@@ -78,19 +85,11 @@ async function fullscreen() {
           </div>
         </div>
       </header>
-      <div class="context-strip">
-        <span class="source-label">{{ data.source || '等待业务数据' }}</span
-        ><span>{{ data.stations.length }} 座电站接入</span
-        ><span
-          >累计电量
-          <b>{{
-            data.kpis.totalEnergyKwh.toLocaleString('zh-CN', { maximumFractionDigits: 1 })
-          }}</b>
-          kWh</span
-        ><span v-if="error" class="warning" role="alert">{{ error }}</span
-        ><span v-else>五秒同步 · 多端业务联动</span>
+      <div v-if="error" class="dashboard-error warning" role="alert">{{ error }}</div>
+      <div class="overview-row">
+        <KpiCards :data="data.kpis" />
+        <StationCapacity v-model="selectedStationId" :stations="data.stations" />
       </div>
-      <KpiCards :data="data.kpis" />
       <main class="dashboard-grid">
         <section class="dashboard-column">
           <ChartCard title="电桩运行状态" eyebrow="01 / DEVICE STATUS"
@@ -104,7 +103,7 @@ async function fullscreen() {
           /></ChartCard>
         </section>
         <section class="dashboard-column dashboard-column--center">
-          <StationMap :stations="data.stations" />
+          <StationMap v-model="selectedStationId" :stations="data.stations" />
           <ChartCard title="近 30 日营收与订单" eyebrow="04 / REVENUE TREND"
             ><RevenueTrend :data="data.revenueTrend"
           /></ChartCard>
@@ -123,19 +122,11 @@ async function fullscreen() {
                     : `${peakCount} 个高峰时段`
               }}</span></template
             >
-            <div class="forecast-body">
-              <ForecastLine :data="data.forecast24h" />
-              <p class="forecast-source" :title="data.forecastMeta.source">
-                {{ data.forecastMeta.source || '由管理端运行预测后显示；历史不足时标注基线估计' }}
-              </p>
-            </div>
+            <ForecastLine :data="data.forecast24h" />
           </ChartCard>
           <ChartCard title="最近业务动态" eyebrow="07 / ACTIVITY FEED">
             <ol class="event-list">
-              <li
-                v-for="(event, index) in data.recentEvents.slice(0, 3)"
-                :key="`${event.createdAt}-${index}`"
-              >
+              <li v-for="(event, index) in operationalEvents" :key="`${event.createdAt}-${index}`">
                 <i />
                 <div>
                   <p :title="event.detail">
@@ -144,16 +135,21 @@ async function fullscreen() {
                   <small>{{ date(event.createdAt) }}</small>
                 </div>
               </li>
-              <li v-if="!data.recentEvents.length" class="empty-state">暂无业务事件</li>
+              <li v-if="!operationalEvents.length" class="empty-state">暂无业务事件</li>
             </ol>
           </ChartCard>
         </section>
       </main>
       <footer class="dashboard-footer">
-        <span>数据截止：{{ date(data.dataCutoff) }}</span
-        ><span>最近同步：{{ date(lastSuccessAt) }}</span
-        ><span>预测生成：{{ date(data.forecastMeta.generatedAt) }}</span
-        ><span>课程演示 / 站点交互可点击</span>
+        <span
+          >{{ data.stations.length }} 座电站 · 累计电量
+          <b>{{
+            data.kpis.totalEnergyKwh.toLocaleString('zh-CN', { maximumFractionDigits: 1 })
+          }}</b>
+          kWh</span
+        >
+        <span>数据更新 {{ date(data.dataCutoff) }}</span>
+        <span>预测更新 {{ date(data.forecastMeta.generatedAt) }}</span>
       </footer>
     </div>
   </div>

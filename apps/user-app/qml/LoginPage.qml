@@ -1,215 +1,85 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
 
 Flickable {
   objectName: 'loginPage'
   contentWidth: width
-  contentHeight: content.height + 48
+  contentHeight: content.height + Theme.sectionSpace * 2
   clip: true
   boundsBehavior: Flickable.StopAtBounds
-
   Column {
     id: content
-    x: 28
-    y: 34
-    width: parent.width - 56
-    spacing: 26
-    Row {
-      spacing: 12
+    x: Theme.pagePadding
+    y: Theme.sectionSpace
+    width: parent.width - Theme.pagePadding * 2
+    spacing: Theme.sectionSpace
+    RowLayout {
+      width: parent.width
+      spacing: Theme.cardPadding
       Image {
         source: 'qrc:/assets/brand.svg'
-        width: 46
-        height: 46
+        Layout.preferredWidth: 48
+        Layout.preferredHeight: 48
+        Accessible.ignored: true
       }
-      Column {
-        y: 2
-        spacing: 4
-        AppText {
-          text: '智充出行'
-          font.pixelSize: 21
-          font.weight: Font.Bold
-        }
-        AppText {
-          text: 'CHARGE & GO'
-          color: Theme.muted
-          font.pixelSize: 10
-          font.letterSpacing: 2
-        }
+      AppText {
+        Layout.fillWidth: true
+        text: '智充出行'
+        font.pixelSize: Theme.titleSize
+        font.weight: Font.DemiBold
       }
     }
-
     Rectangle {
       width: parent.width
-      height: 285
-      radius: 30
+      height: 288
+      radius: Theme.heroRadius
       color: Theme.primary
-      clip: true
-      Rectangle {
-        x: parent.width - 230
-        y: 44
-        width: 210
-        height: 210
-        radius: 105
-        color: '#2b674d'
-      }
-      Rectangle {
-        x: parent.width - 162
-        y: 108
-        width: 140
-        height: 140
-        radius: 70
-        color: '#327455'
-      }
       Column {
-        x: 26
-        y: 29
-        spacing: 12
+        x: Theme.cardPadding
+        y: Theme.cardPadding
+        width: parent.width - Theme.cardPadding * 2
+        spacing: Theme.space
         AppText {
-          text: '每一程，\n都电力满满。'
+          text: '每一程，都电力满满'
+          width: parent.width
+          wrapMode: Text.WordWrap
+          font.pixelSize: Theme.headlineSize
+          font.weight: Font.DemiBold
           color: 'white'
-          font.pixelSize: 31
-          font.weight: Font.Bold
-          lineHeight: 1.2
         }
         AppText {
-          text: '好电站，就在你身边'
-          color: '#c0d7c8'
-          font.pixelSize: 13
+          text: '附近找桩，轻松补能'
+          color: '#d2e2d5'
+          font.pixelSize: Theme.bodySize
         }
       }
-      // A small vector charging scene stays crisp at every simulated phone size.
-      Item {
-        width: 176
-        height: 110
+      HeroIllustration {
+        anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.rightMargin: 22
-        anchors.bottomMargin: 22
-        Rectangle {
-          x: 4
-          y: 88
-          width: 171
-          height: 2
-          color: '#77a389'
-        }
-        Rectangle {
-          x: 113
-          y: 3
-          width: 41
-          height: 84
-          radius: 9
-          color: Theme.accent
-        }
-        Rectangle {
-          x: 121
-          y: 14
-          width: 25
-          height: 21
-          radius: 4
-          color: '#27593f'
-        }
-        AppText {
-          x: 128
-          y: 37
-          text: 'ϟ'
-          font.pixelSize: 26
-          color: Theme.primary
-        }
-        Rectangle {
-          x: 4
-          y: 44
-          width: 94
-          height: 34
-          radius: 14
-          color: '#f0f5e7'
-        }
-        Rectangle {
-          x: 20
-          y: 23
-          width: 54
-          height: 34
-          radius: 16
-          color: '#f0f5e7'
-        }
-        Rectangle {
-          x: 27
-          y: 29
-          width: 40
-          height: 21
-          radius: 8
-          color: '#78a991'
-        }
-        Rectangle {
-          x: 8
-          y: 67
-          width: 24
-          height: 24
-          radius: 12
-          color: '#153a29'
-          border.width: 6
-          border.color: '#a3baa5'
-        }
-        Rectangle {
-          x: 66
-          y: 67
-          width: 24
-          height: 24
-          radius: 12
-          color: '#153a29'
-          border.width: 6
-          border.color: '#a3baa5'
-        }
-        Rectangle {
-          x: 151
-          y: 22
-          width: 9
-          height: 5
-          radius: 2
-          color: '#d9ee89'
-        }
-        Rectangle {
-          x: 157
-          y: 23
-          width: 5
-          height: 50
-          radius: 2
-          color: '#d9ee89'
-        }
-        Rectangle {
-          x: 150
-          y: 69
-          width: 12
-          height: 5
-          radius: 2
-          color: '#d9ee89'
-        }
-      }
-      Badge {
-        x: 26
-        y: 234
-        text: '绿色出行'
-        fill: '#46795b'
-        textColor: '#e9f3df'
+        anchors.margins: Theme.cardPadding
+        height: 172
       }
     }
-
     Column {
       width: parent.width
-      spacing: 10
+      spacing: Theme.space
       AppText {
-        text: '欢迎使用智充出行'
-        font.pixelSize: 23
-        font.weight: Font.Bold
+        text: '手机号登录'
+        font.pixelSize: Theme.titleSize
+        font.weight: Font.DemiBold
       }
       AppText {
-        text: '手机号即可登录，首次使用自动创建账号'
+        width: parent.width
+        text: '首次登录将自动创建账号'
         color: Theme.muted
-        font.pixelSize: 12
+        wrapMode: Text.WordWrap
       }
     }
     Column {
       width: parent.width
-      spacing: 12
+      spacing: Theme.cardPadding
       AppField {
         id: phone
         objectName: 'phoneInput'
@@ -226,15 +96,15 @@ Flickable {
       ActionButton {
         objectName: 'loginButton'
         width: parent.width
-        text: mobile.busy ? '正在登录…' : '登录 / 注册  →'
+        text: mobile.busy ? '正在登录…' : '登录 / 注册'
         enabled: !mobile.busy
         onClicked: mobile.login(phone.text)
       }
       AppText {
         width: parent.width
-        text: '课程演示 · 手机号免密登录 · 模拟充值'
-        color: '#929d94'
-        font.pixelSize: 11
+        text: '免密登录 · 模拟充值'
+        color: Theme.muted
+        font.pixelSize: Theme.labelSize
         horizontalAlignment: Text.AlignHCenter
       }
     }

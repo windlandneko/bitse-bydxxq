@@ -3,18 +3,19 @@ import QtQuick.Controls 2.15
 
 TextField {
   id: control
-  implicitHeight: 54
-  font.pixelSize: 15
-  color: Theme.ink
-  placeholderTextColor: '#a0aaa2'
-  leftPadding: 16
-  rightPadding: 16
+  implicitHeight: 56
+  font.pixelSize: Theme.bodyLargeSize
+  color: enabled ? Theme.ink : Theme.disabledText
+  placeholderTextColor: Theme.muted
+  leftPadding: Theme.cardPadding
+  rightPadding: Theme.cardPadding
   selectByMouse: true
   selectionColor: Theme.primaryLight
   selectedTextColor: Theme.ink
+  Accessible.name: placeholderText
   background: Rectangle {
-    color: Theme.card
-    radius: 14
+    color: control.enabled ? Theme.card : Theme.disabled
+    radius: Theme.cardRadius
     border.color: control.activeFocus ? Theme.primary : Theme.border
     border.width: control.activeFocus ? 2 : 1
   }
