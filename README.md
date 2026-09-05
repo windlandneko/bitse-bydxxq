@@ -15,6 +15,8 @@ charging-platform/
 │   ├── schema.sql         # 表、索引和视图
 │   └── seed.sql           # 开发/演示种子数据
 ├── apps/                  # Qt 用户端与管理端
+├── ml/                    # 机器学习负荷预测子系统（UC-M）
+├── web/                   # Web 数据大屏（UC-W）
 ├── spec/                  # 需求与验收清单（for AI）
 │   └── TODO.md            # 待实现功能和测试用例
 ├── docs/                  # 关键设计与使用文档（for human）
@@ -75,6 +77,22 @@ python scripts/export_dashboard.py \
 ```
 
 详细说明见 [`web/README.md`](web/README.md)。
+
+## 构建与运行机器学习负荷预测
+
+机器学习子系统对应需求中的智能分析（UC-M），使用 Python + scikit-learn 从历史充电会话训练负荷预测模型，并把未来 1/6/24 小时预测回写 `load_forecasts`。
+
+```bash
+# 安装依赖（uv 或 pip 二选一）
+cd ml && uv sync                       # 或 python3 -m pip install -r ml/requirements.txt
+
+# 训练 → 评估 → 预测回写（在仓库根目录执行）
+python -m ml.train    --db charge_platform.db
+python -m ml.evaluate --db charge_platform.db
+python -m ml.predict  --db charge_platform.db
+```
+
+详细说明见 [`ml/README.md`](ml/README.md)。
 
 ## 团队协作与 Git 规范
 
