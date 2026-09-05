@@ -1,0 +1,624 @@
+{
+  "dataset": "Jiaxing public EV charging transactions 2020–2021",
+  "sourceUrl": "https://doi.org/10.6084/m9.figshare.28182251",
+  "scope": "公开历史数据离线回测；与课程业务站点独立，不代表当前实时预测精度。",
+  "modelVersion": "jiaxing-direct-rf-v2",
+  "seed": 42,
+  "method": "按时间前80%训练、后20%每6小时滚动原点测试；每次预测未来24小时，不向递归步骤提供未来真实值。允许原点前已到达的测试历史作为滞后观测。模型直接输出24步。固定超参数，无测试集调参。",
+  "features": "原点小时/星期周期、已知负荷lag0/1/23/24/167、原点及此前24/168小时均值；中国法定节假日及调休、年周期；原点前一自然日已完成的真实温度/降水，缺失显式标记。未使用预测日真实天气。",
+  "aggregation": "会话电量依据每个小时实际重叠秒数均匀分摊；无记录的小时视作零交易；数据采集完整性未知，这是评估限制。",
+  "metrics": "MAE/RMSE为kW；WAPE以测试真实总负荷作分母，避免零负荷MAPE爆炸。",
+  "trainStart": "2019-12-31T13:00:00Z",
+  "trainEndExclusive": "2021-08-07T10:00:00Z",
+  "testEnd": "2021-12-31T16:00:00Z",
+  "hours": 17547,
+  "stations": 13,
+  "rawSessions": 441077,
+  "acceptedSessions": 441072,
+  "excludedSessions": 5,
+  "inputEnergyKwh": 7249794.57,
+  "allocatedEnergyKwh": 7249794.57,
+  "screening": "起止时间有效、结束晚于开始、有限非负电量、会话不超过7天；不按未来分位数删除数据。",
+  "horizons": {
+    "1": {
+      "samples": 7566,
+      "randomForest": {
+        "maeKw": 27.2004,
+        "rmseKw": 38.8858,
+        "wapePercent": 60.198
+      },
+      "weeklyBaseline": {
+        "maeKw": 22.91,
+        "rmseKw": 33.3926,
+        "wapePercent": 50.702
+      }
+    },
+    "6": {
+      "samples": 7566,
+      "randomForest": {
+        "maeKw": 27.6398,
+        "rmseKw": 41.4341,
+        "wapePercent": 59.352
+      },
+      "weeklyBaseline": {
+        "maeKw": 24.0883,
+        "rmseKw": 35.1569,
+        "wapePercent": 51.725
+      }
+    },
+    "24": {
+      "samples": 7566,
+      "randomForest": {
+        "maeKw": 27.988,
+        "rmseKw": 41.8632,
+        "wapePercent": 59.961
+      },
+      "weeklyBaseline": {
+        "maeKw": 24.1407,
+        "rmseKw": 35.1969,
+        "wapePercent": 51.719
+      }
+    }
+  },
+  "stationResults": [
+    {
+      "station": "Bus Station",
+      "trainingSamples": 2308,
+      "testOrigins": 582,
+      "horizons": {
+        "1": {
+          "randomForest": {
+            "maeKw": 38.581,
+            "rmseKw": 47.8832,
+            "wapePercent": 42.668
+          },
+          "weeklyBaseline": {
+            "maeKw": 31.9503,
+            "rmseKw": 41.4121,
+            "wapePercent": 35.335
+          }
+        },
+        "6": {
+          "randomForest": {
+            "maeKw": 34.4866,
+            "rmseKw": 45.177,
+            "wapePercent": 36.049
+          },
+          "weeklyBaseline": {
+            "maeKw": 32.4293,
+            "rmseKw": 41.4731,
+            "wapePercent": 33.899
+          }
+        },
+        "24": {
+          "randomForest": {
+            "maeKw": 39.7068,
+            "rmseKw": 51.7949,
+            "wapePercent": 41.348
+          },
+          "weeklyBaseline": {
+            "maeKw": 32.5277,
+            "rmseKw": 41.5335,
+            "wapePercent": 33.872
+          }
+        }
+      }
+    },
+    {
+      "station": "Expressway Service District A",
+      "trainingSamples": 2308,
+      "testOrigins": 582,
+      "horizons": {
+        "1": {
+          "randomForest": {
+            "maeKw": 15.2372,
+            "rmseKw": 21.1022,
+            "wapePercent": 74.994
+          },
+          "weeklyBaseline": {
+            "maeKw": 17.6576,
+            "rmseKw": 24.8108,
+            "wapePercent": 86.907
+          }
+        },
+        "6": {
+          "randomForest": {
+            "maeKw": 16.7301,
+            "rmseKw": 23.2596,
+            "wapePercent": 79.889
+          },
+          "weeklyBaseline": {
+            "maeKw": 17.1904,
+            "rmseKw": 24.6829,
+            "wapePercent": 82.087
+          }
+        },
+        "24": {
+          "randomForest": {
+            "maeKw": 16.6973,
+            "rmseKw": 23.3368,
+            "wapePercent": 79.324
+          },
+          "weeklyBaseline": {
+            "maeKw": 17.21,
+            "rmseKw": 24.6856,
+            "wapePercent": 81.76
+          }
+        }
+      }
+    },
+    {
+      "station": "Expressway Service District B",
+      "trainingSamples": 2308,
+      "testOrigins": 582,
+      "horizons": {
+        "1": {
+          "randomForest": {
+            "maeKw": 14.9751,
+            "rmseKw": 20.7735,
+            "wapePercent": 83.899
+          },
+          "weeklyBaseline": {
+            "maeKw": 16.1851,
+            "rmseKw": 23.2295,
+            "wapePercent": 90.679
+          }
+        },
+        "6": {
+          "randomForest": {
+            "maeKw": 14.1866,
+            "rmseKw": 20.5239,
+            "wapePercent": 82.837
+          },
+          "weeklyBaseline": {
+            "maeKw": 16.6619,
+            "rmseKw": 24.3735,
+            "wapePercent": 97.29
+          }
+        },
+        "24": {
+          "randomForest": {
+            "maeKw": 14.6291,
+            "rmseKw": 21.0333,
+            "wapePercent": 84.87
+          },
+          "weeklyBaseline": {
+            "maeKw": 16.6329,
+            "rmseKw": 24.3318,
+            "wapePercent": 96.494
+          }
+        }
+      }
+    },
+    {
+      "station": "Expressway Service District C",
+      "trainingSamples": 2308,
+      "testOrigins": 582,
+      "horizons": {
+        "1": {
+          "randomForest": {
+            "maeKw": 27.4221,
+            "rmseKw": 34.8089,
+            "wapePercent": 53.618
+          },
+          "weeklyBaseline": {
+            "maeKw": 27.5393,
+            "rmseKw": 36.4297,
+            "wapePercent": 53.848
+          }
+        },
+        "6": {
+          "randomForest": {
+            "maeKw": 30.2908,
+            "rmseKw": 38.7243,
+            "wapePercent": 58.115
+          },
+          "weeklyBaseline": {
+            "maeKw": 30.4191,
+            "rmseKw": 40.722,
+            "wapePercent": 58.361
+          }
+        },
+        "24": {
+          "randomForest": {
+            "maeKw": 29.722,
+            "rmseKw": 37.7521,
+            "wapePercent": 56.86
+          },
+          "weeklyBaseline": {
+            "maeKw": 30.5129,
+            "rmseKw": 40.7605,
+            "wapePercent": 58.373
+          }
+        }
+      }
+    },
+    {
+      "station": "Financial Industrial Park",
+      "trainingSamples": 2308,
+      "testOrigins": 582,
+      "horizons": {
+        "1": {
+          "randomForest": {
+            "maeKw": 34.7942,
+            "rmseKw": 49.2061,
+            "wapePercent": 118.911
+          },
+          "weeklyBaseline": {
+            "maeKw": 10.0801,
+            "rmseKw": 23.2131,
+            "wapePercent": 34.449
+          }
+        },
+        "6": {
+          "randomForest": {
+            "maeKw": 37.8116,
+            "rmseKw": 61.2022,
+            "wapePercent": 103.822
+          },
+          "weeklyBaseline": {
+            "maeKw": 14.7968,
+            "rmseKw": 29.0119,
+            "wapePercent": 40.629
+          }
+        },
+        "24": {
+          "randomForest": {
+            "maeKw": 37.0978,
+            "rmseKw": 59.4094,
+            "wapePercent": 101.047
+          },
+          "weeklyBaseline": {
+            "maeKw": 14.8212,
+            "rmseKw": 29.018,
+            "wapePercent": 40.37
+          }
+        }
+      }
+    },
+    {
+      "station": "Government Agency",
+      "trainingSamples": 2308,
+      "testOrigins": 582,
+      "horizons": {
+        "1": {
+          "randomForest": {
+            "maeKw": 35.1008,
+            "rmseKw": 45.203,
+            "wapePercent": 57.18
+          },
+          "weeklyBaseline": {
+            "maeKw": 28.9709,
+            "rmseKw": 39.7812,
+            "wapePercent": 47.194
+          }
+        },
+        "6": {
+          "randomForest": {
+            "maeKw": 33.4913,
+            "rmseKw": 45.5718,
+            "wapePercent": 54.623
+          },
+          "weeklyBaseline": {
+            "maeKw": 33.8043,
+            "rmseKw": 44.9395,
+            "wapePercent": 55.134
+          }
+        },
+        "24": {
+          "randomForest": {
+            "maeKw": 32.043,
+            "rmseKw": 43.8892,
+            "wapePercent": 52.38
+          },
+          "weeklyBaseline": {
+            "maeKw": 34.008,
+            "rmseKw": 45.1248,
+            "wapePercent": 55.592
+          }
+        }
+      }
+    },
+    {
+      "station": "Industrial Park",
+      "trainingSamples": 2308,
+      "testOrigins": 582,
+      "horizons": {
+        "1": {
+          "randomForest": {
+            "maeKw": 17.0244,
+            "rmseKw": 22.3017,
+            "wapePercent": 60.546
+          },
+          "weeklyBaseline": {
+            "maeKw": 18.906,
+            "rmseKw": 25.7569,
+            "wapePercent": 67.238
+          }
+        },
+        "6": {
+          "randomForest": {
+            "maeKw": 17.6353,
+            "rmseKw": 21.5746,
+            "wapePercent": 70.012
+          },
+          "weeklyBaseline": {
+            "maeKw": 20.0127,
+            "rmseKw": 27.2878,
+            "wapePercent": 79.45
+          }
+        },
+        "24": {
+          "randomForest": {
+            "maeKw": 17.7037,
+            "rmseKw": 22.5342,
+            "wapePercent": 70.033
+          },
+          "weeklyBaseline": {
+            "maeKw": 20.0294,
+            "rmseKw": 27.3013,
+            "wapePercent": 79.233
+          }
+        }
+      }
+    },
+    {
+      "station": "Park A",
+      "trainingSamples": 2308,
+      "testOrigins": 582,
+      "horizons": {
+        "1": {
+          "randomForest": {
+            "maeKw": 14.1189,
+            "rmseKw": 19.965,
+            "wapePercent": 63.12
+          },
+          "weeklyBaseline": {
+            "maeKw": 19.0464,
+            "rmseKw": 27.89,
+            "wapePercent": 85.149
+          }
+        },
+        "6": {
+          "randomForest": {
+            "maeKw": 15.5874,
+            "rmseKw": 21.4569,
+            "wapePercent": 69.72
+          },
+          "weeklyBaseline": {
+            "maeKw": 17.9943,
+            "rmseKw": 26.4557,
+            "wapePercent": 80.485
+          }
+        },
+        "24": {
+          "randomForest": {
+            "maeKw": 14.5966,
+            "rmseKw": 20.4756,
+            "wapePercent": 65.159
+          },
+          "weeklyBaseline": {
+            "maeKw": 18.0985,
+            "rmseKw": 26.538,
+            "wapePercent": 80.792
+          }
+        }
+      }
+    },
+    {
+      "station": "Park B",
+      "trainingSamples": 2308,
+      "testOrigins": 582,
+      "horizons": {
+        "1": {
+          "randomForest": {
+            "maeKw": 39.8405,
+            "rmseKw": 48.1048,
+            "wapePercent": 45.501
+          },
+          "weeklyBaseline": {
+            "maeKw": 34.3117,
+            "rmseKw": 44.1556,
+            "wapePercent": 39.187
+          }
+        },
+        "6": {
+          "randomForest": {
+            "maeKw": 39.4715,
+            "rmseKw": 48.4705,
+            "wapePercent": 44.954
+          },
+          "weeklyBaseline": {
+            "maeKw": 33.8812,
+            "rmseKw": 44.437,
+            "wapePercent": 38.587
+          }
+        },
+        "24": {
+          "randomForest": {
+            "maeKw": 40.2121,
+            "rmseKw": 49.2502,
+            "wapePercent": 45.627
+          },
+          "weeklyBaseline": {
+            "maeKw": 33.8242,
+            "rmseKw": 44.4165,
+            "wapePercent": 38.379
+          }
+        }
+      }
+    },
+    {
+      "station": "Shopping Mall",
+      "trainingSamples": 2308,
+      "testOrigins": 582,
+      "horizons": {
+        "1": {
+          "randomForest": {
+            "maeKw": 29.1273,
+            "rmseKw": 35.4161,
+            "wapePercent": 48.587
+          },
+          "weeklyBaseline": {
+            "maeKw": 26.4791,
+            "rmseKw": 35.3443,
+            "wapePercent": 44.169
+          }
+        },
+        "6": {
+          "randomForest": {
+            "maeKw": 26.6413,
+            "rmseKw": 35.0492,
+            "wapePercent": 42.613
+          },
+          "weeklyBaseline": {
+            "maeKw": 29.0177,
+            "rmseKw": 37.7542,
+            "wapePercent": 46.414
+          }
+        },
+        "24": {
+          "randomForest": {
+            "maeKw": 28.6075,
+            "rmseKw": 37.0107,
+            "wapePercent": 45.571
+          },
+          "weeklyBaseline": {
+            "maeKw": 29.0294,
+            "rmseKw": 37.7084,
+            "wapePercent": 46.243
+          }
+        }
+      }
+    },
+    {
+      "station": "Technology Park",
+      "trainingSamples": 2308,
+      "testOrigins": 582,
+      "horizons": {
+        "1": {
+          "randomForest": {
+            "maeKw": 13.5841,
+            "rmseKw": 16.5617,
+            "wapePercent": 102.867
+          },
+          "weeklyBaseline": {
+            "maeKw": 10.0685,
+            "rmseKw": 20.0125,
+            "wapePercent": 76.245
+          }
+        },
+        "6": {
+          "randomForest": {
+            "maeKw": 11.7914,
+            "rmseKw": 16.4753,
+            "wapePercent": 83.899
+          },
+          "weeklyBaseline": {
+            "maeKw": 9.324,
+            "rmseKw": 19.173,
+            "wapePercent": 66.343
+          }
+        },
+        "24": {
+          "randomForest": {
+            "maeKw": 11.8468,
+            "rmseKw": 16.8469,
+            "wapePercent": 85.384
+          },
+          "weeklyBaseline": {
+            "maeKw": 9.3053,
+            "rmseKw": 19.17,
+            "wapePercent": 67.067
+          }
+        }
+      }
+    },
+    {
+      "station": "Tourist Attraction",
+      "trainingSamples": 2308,
+      "testOrigins": 582,
+      "horizons": {
+        "1": {
+          "randomForest": {
+            "maeKw": 54.734,
+            "rmseKw": 73.3736,
+            "wapePercent": 82.693
+          },
+          "weeklyBaseline": {
+            "maeKw": 33.6654,
+            "rmseKw": 47.1791,
+            "wapePercent": 50.862
+          }
+        },
+        "6": {
+          "randomForest": {
+            "maeKw": 58.3092,
+            "rmseKw": 79.1652,
+            "wapePercent": 86.057
+          },
+          "weeklyBaseline": {
+            "maeKw": 34.0615,
+            "rmseKw": 49.4316,
+            "wapePercent": 50.27
+          }
+        },
+        "24": {
+          "randomForest": {
+            "maeKw": 58.3223,
+            "rmseKw": 79.2722,
+            "wapePercent": 86.161
+          },
+          "weeklyBaseline": {
+            "maeKw": 34.1386,
+            "rmseKw": 49.4709,
+            "wapePercent": 50.434
+          }
+        }
+      }
+    },
+    {
+      "station": "Wholesale Market",
+      "trainingSamples": 2308,
+      "testOrigins": 582,
+      "horizons": {
+        "1": {
+          "randomForest": {
+            "maeKw": 19.066,
+            "rmseKw": 26.252,
+            "wapePercent": 48.1
+          },
+          "weeklyBaseline": {
+            "maeKw": 22.9694,
+            "rmseKw": 30.1766,
+            "wapePercent": 57.948
+          }
+        },
+        "6": {
+          "randomForest": {
+            "maeKw": 22.8846,
+            "rmseKw": 30.8333,
+            "wapePercent": 54.312
+          },
+          "weeklyBaseline": {
+            "maeKw": 23.5547,
+            "rmseKw": 31.1377,
+            "wapePercent": 55.902
+          }
+        },
+        "24": {
+          "randomForest": {
+            "maeKw": 22.6596,
+            "rmseKw": 30.6905,
+            "wapePercent": 53.733
+          },
+          "weeklyBaseline": {
+            "maeKw": 23.6906,
+            "rmseKw": 31.2931,
+            "wapePercent": 56.178
+          }
+        }
+      }
+    }
+  ]
+}

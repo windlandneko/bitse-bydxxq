@@ -1,12 +1,14 @@
 #pragma once
 
 #include <QMainWindow>
-class QButtonGroup;
+#include <memory>
 
 class AdminMainWindow final : public QMainWindow {
-  public:
-    explicit AdminMainWindow(QWidget *parent = nullptr);
+public:
+  explicit AdminMainWindow(QWidget *parent = nullptr);
+  ~AdminMainWindow() override;
 
-  private:
-    QButtonGroup *navigationGroup_ = nullptr;
+private:
+  class Impl;
+  std::unique_ptr<Impl> impl_;
 };

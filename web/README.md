@@ -1,46 +1,31 @@
-# Web 数据大屏
+# 充电运营指挥中心
 
-这是 NCS 充电平台的 Vue 3 + ECharts 可视化大屏。浏览器只读取 `public/data/dashboard.json`，不直接连接 SQLite。
+Vue 3 + TypeScript + ECharts，1920×1080 设计尺寸等比适配，1366×768 无页面滚动。
+大屏读取统一 C++ 服务 `/api/dashboard`，每 5 秒刷新。连接失败保留最近快照并显示
+中断提示，统计快照超过 30 秒标记过期，预测超过 1 小时标记过期。
 
-## 本地运行
+从仓库根目录执行：
 
-```bash
-cd web
-npm install
-npm run dev
+```sh
+pnpm --dir web install --frozen-lockfile
+pnpm --dir web build
 ```
 
-打开终端输出的地址即可查看大屏。不要直接双击 `index.html`，否则浏览器可能阻止读取 JSON。
+统一后端直接提供 `web/dist`。开发时先启动默认 8080 后端，再运行
+`pnpm --dir web dev`，Vite 会代理 `/api` 到后端，无需另外配置跨域。
+生产环境与开发环境均没有静态演示数据回退、CDN 或外网字体。
 
-## 连接真实数据库
-
-当前仓库中的 `database/` 目录包含建表和种子脚本；如果本机还没有 `charge_platform.db`，先通过项目初始化流程生成它，再执行导出。
-
-从仓库根目录运行导出脚本：
-
-```bash
-python scripts/export_dashboard.py \
-  --db database/charge_platform.db \
-  --out web/public/data/dashboard.json
+```sh
+pnpm --dir web lint
+pnpm --dir web format:check
+pnpm --dir web validate:data
+# 其他后端端口：
+pnpm --dir web validate:data http://127.0.0.1:18080/api/dashboard
 ```
 
-需要持续演示自动更新时，可以让脚本每 30 秒导出一次：
+中心空间图以实际站点经纬度定位，点击光点或站名切换详情；明确标注“经纬度示意 ·
+无道路底图”。四个 KPI、状态分布、排名、快慢充、营收趋势、时段热力图、预测和动态
+均来自当前业务数据库聚合，不制造增长百分比。预测来源区分模型/基线和课程数据。
+公开历史数据回测结果在 `ml/reports/jiaxing/` 独立记录，不冒充当前业务预测精度。
 
-```bash
-python scripts/export_dashboard.py \
-  --db database/charge_platform.db \
-  --out web/public/data/dashboard.json \
-  --watch --interval 30
-```
-
-脚本读取实际数据库表 `users`、`stations`、`chargers`、`orders`、`charging_sessions` 和 `load_forecasts`，并原子写入前端数据文件。Web 页面每 30 秒自动读取一次。
-
-## 构建验收包
-
-```bash
-npm run validate:data
-npm run build
-npm run preview
-```
-
-部署构建产物时，需要让导出脚本更新部署目录中的 `dist/data/dashboard.json`，或让静态服务器把 `/data` 指向一个独立的数据目录。
+第三方实际复用与完整许可证见 `third-party/README.md`。

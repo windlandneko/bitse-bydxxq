@@ -2,7 +2,7 @@
 BasedOnStyle: LLVM
 
 # 缩进
-IndentWidth: 4
+IndentWidth: 2
 ContinuationIndentWidth: 2
 
 AllowShortLoopsOnASingleLine: true # 允许短循环写在单行

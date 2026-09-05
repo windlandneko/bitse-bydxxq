@@ -4,7 +4,7 @@
 build*/
 cmake-build-*/
 bin/
-lib/
+/lib/
 logs/
 
 # ==========================================
@@ -94,3 +94,9 @@ ml/models/*.pkl
 reference/datasets/**/*
 !reference/datasets/**/
 !reference/datasets/**/source.md
+
+# Runtime service state and local secrets
+/data/
+.env
+.env.*
+*.sqlite3

@@ -10,11 +10,11 @@ indent_style = space
 indent_size = 2
 
 [*.{c,cc,cpp,cxx,h,hh,hpp,hxx}]
-indent_size = 4
-tab_width = 4
+indent_size = 2
+tab_width = 2
 
 [*.{ui,qrc}]
-indent_size = 4
+indent_size = 2
 
 [Makefile]
 indent_style = tab
