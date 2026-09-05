@@ -9,4 +9,30 @@
     <file alias="chevron-down.svg">icons/chevron-down.svg</file>
     <file alias="list.svg">icons/list.svg</file>
   </qresource>
+
+  <qresource prefix="/qml">
+    <file alias="ActionButton.qml">qml/ActionButton.qml</file>
+    <file alias="AppField.qml">qml/AppField.qml</file>
+    <file alias="AppText.qml">qml/AppText.qml</file>
+    <file alias="Badge.qml">qml/Badge.qml</file>
+    <file alias="ChargingPage.qml">qml/ChargingPage.qml</file>
+    <file alias="EditProfilePage.qml">qml/EditProfilePage.qml</file>
+    <file alias="EmptyState.qml">qml/EmptyState.qml</file>
+    <file alias="HomePage.qml">qml/HomePage.qml</file>
+    <file alias="KeyValue.qml">qml/KeyValue.qml</file>
+    <file alias="LocationPage.qml">qml/LocationPage.qml</file>
+    <file alias="LoginPage.qml">qml/LoginPage.qml</file>
+    <file alias="Main.qml">qml/Main.qml</file>
+    <file alias="OrdersPage.qml">qml/OrdersPage.qml</file>
+    <file alias="ProfilePage.qml">qml/ProfilePage.qml</file>
+    <file alias="ReceiptPage.qml">qml/ReceiptPage.qml</file>
+    <file alias="RechargePage.qml">qml/RechargePage.qml</file>
+    <file alias="StationCard.qml">qml/StationCard.qml</file>
+    <file alias="StationPage.qml">qml/StationPage.qml</file>
+    <file alias="Theme.qml">qml/Theme.qml</file>
+    <file alias="qmldir">qml/qmldir</file>
+  </qresource>
+  <qresource prefix="/assets">
+    <file alias="brand.svg">assets/brand.svg</file>
+  </qresource>
 </RCC>

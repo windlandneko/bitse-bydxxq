@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Charging Platform</title>
+  <desc id="desc">Two aligned circular energy loops connected by a precise diagonal.</desc>
+
+  <rect width="1024" height="1024" rx="216" fill="#151515"/>
+
+  <g transform="scale(2)">
+    <path
+      d="M232 232
+         L198 198
+         A82 82 0 1 0 198 314
+         L314 198
+         A82 82 0 1 1 314 314"
+      fill="none"
+      stroke="#F4F1E8"
+      stroke-width="34"
+      stroke-linecap="butt"
+      stroke-linejoin="round"
+    />
+
+    <path
+      d="M297 271
+         L234 335
+         L251 335
+         L305 280
+         Z"
+      fill="#F4F1E8"
+    />
+
+    <g fill="#FFD21F">
+      <rect x="336" y="232" width="18" height="48" rx="3"/>
+      <rect x="363" y="232" width="18" height="48" rx="3"/>
+      <rect x="390" y="232" width="18" height="48" rx="3"/>
+    </g>
+  </g>
+</svg>

@@ -14,8 +14,9 @@ case ${1:-format} in
   *) echo "Usage: $0 [--check]" >&2; exit 2 ;;
 esac
 
-find "$repo_dir" \
-  -type d \( -name .git -o -name build -o -name 'build-*' -o -name 'cmake-build-*' \) -prune \
-  -o -type f \( -name '*.c' -o -name '*.cc' -o -name '*.cpp' -o -name '*.cxx' \
-  -o -name '*.h' -o -name '*.hh' -o -name '*.hpp' -o -name '*.hxx' \) \
-  -exec clang-format --style=file "${clang_args[@]}" {} +
+git -C "$repo_dir" ls-files --cached --others --exclude-standard -z -- \
+  '*.c' '*.cc' '*.cpp' '*.cxx' '*.h' '*.hh' '*.hpp' '*.hxx' \
+  | while IFS= read -r -d '' path; do
+      [[ "$path" == */third-party/* ]] && continue
+      clang-format --style=file "${clang_args[@]}" "$repo_dir/$path"
+    done

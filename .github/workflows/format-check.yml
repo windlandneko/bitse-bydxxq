@@ -1,4 +1,4 @@
-name: C++ formatting
+name: Build and test
 
 on:
   pull_request:
@@ -7,12 +7,56 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  clang-format:
+  ubuntu-22:
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    env:
+      CHARGING_BUILD_JOBS: '2'
+      QT_QPA_PLATFORM: offscreen
+      QT_QUICK_BACKEND: software
+      QT_SCALE_FACTOR: '1'
+      TZ: Asia/Shanghai
     steps:
       - uses: actions/checkout@v4
-      - name: Install clang-format
-        run: sudo apt-get update && sudo apt-get install -y clang-format
-      - name: Check formatting
-        run: ./scripts/format-cpp.sh --check
+        with:
+          persist-credentials: false
+      - name: Install Ubuntu Qt 6 and test dependencies
+        run: sudo bash scripts/setup_env.sh --system-only
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: web/package.json
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.9'
+          python-version: '3.10'
+          enable-cache: true
+          cache-dependency-glob: ml/uv.lock
+      - name: Validate tools and shell scripts
+        run: |
+          scripts/setup_env.sh --check
+          shellcheck -x scripts/setup_env.sh scripts/build.sh scripts/qt-env.sh scripts/test.sh
+      - name: Build all applications, service and dashboard
+        run: scripts/build.sh
+      - name: Check formatting and run service, ML and Qt UI tests
+        run: scripts/test.sh
+      - name: Preserve test diagnostics and deployable web build
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-22-results
+          path: |
+            build/full/Testing/Temporary/
+            web/dist/
+          if-no-files-found: ignore
+          retention-days: 7

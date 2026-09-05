@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AnimatedNumber from './AnimatedNumber.vue'
 import type { KpiData } from '../types/dashboard'
 
 defineProps<{ data: KpiData }>()
@@ -9,12 +10,6 @@ const items = [
   { key: 'onlineChargers', label: '在线电桩', unit: '台', icon: '◉', accent: 'green' },
   { key: 'registeredUsers', label: '注册用户', unit: '人', icon: '♙', accent: 'violet' },
 ] as const
-
-function formatValue(key: (typeof items)[number]['key'], value: number) {
-  return key === 'totalRevenue'
-    ? value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    : value.toLocaleString('zh-CN')
-}
 </script>
 
 <template>
@@ -23,10 +18,9 @@ function formatValue(key: (typeof items)[number]['key'], value: number) {
       <div class="kpi-card__icon">{{ item.icon }}</div>
       <div class="kpi-card__label">{{ item.label }}</div>
       <div class="kpi-card__value">
-        {{ formatValue(item.key, data[item.key]) }}
+        <AnimatedNumber :value="data[item.key]" :decimals="item.key === 'totalRevenue' ? 2 : 0" />
         <small>{{ item.unit }}</small>
       </div>
-      <div class="kpi-card__spark" aria-hidden="true"><i /><i /><i /><i /><i /></div>
     </div>
   </div>
 </template>

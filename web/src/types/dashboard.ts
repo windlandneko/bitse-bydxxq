@@ -5,12 +5,14 @@ export type ChargerStatusKey =
   | 'fault'
   | 'offline'
   | 'maintenance'
+  | 'restarting'
 
 export interface KpiData {
   totalChargingCount: number
   totalRevenue: number
   onlineChargers: number
   registeredUsers: number
+  totalEnergyKwh: number
 }
 
 export interface ChargerStatusItem {
@@ -54,7 +56,25 @@ export interface ForecastItem {
   isPeak: boolean
 }
 
+export interface Station {
+  id: number
+  code: string
+  name: string
+  address: string
+  region: string
+  latitude: number
+  longitude: number
+  totalChargers: number
+  idleChargers: number
+  onlineRate: number
+  priceCents: number
+}
+
 export interface DashboardData {
+  source: string
+  stations: Station[]
+  recentEvents: { action: string; detail: string; createdAt: string }[]
+  forecastMeta: { generatedAt: string; modelVersion: string; source: string }
   generatedAt: string
   dataCutoff: string
   kpis: KpiData
@@ -67,6 +87,10 @@ export interface DashboardData {
 }
 
 export const emptyDashboard: DashboardData = {
+  source: '',
+  stations: [],
+  recentEvents: [],
+  forecastMeta: { generatedAt: '', modelVersion: '', source: '' },
   generatedAt: '',
   dataCutoff: '',
   kpis: {
@@ -74,6 +98,7 @@ export const emptyDashboard: DashboardData = {
     totalRevenue: 0,
     onlineChargers: 0,
     registeredUsers: 0,
+    totalEnergyKwh: 0,
   },
   chargerStatus: [],
   stationRanking: [],

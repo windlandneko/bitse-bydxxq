@@ -1,83 +1,56 @@
-# 机器学习智能分析子系统（UC-M）
+# 负荷预测与公开数据回测
 
-充电负荷智能预测：从历史充电会话中聚合逐小时负荷，训练随机森林回归模型，
-预测未来 1 / 6 / 24 小时的各站充电负荷与空闲桩数，标记高峰时段并回写数据库。
+当前模块只有两个正式入口，均从仓库根目录运行。Python 不打开业务 SQLite；
+C++ 服务收集历史并调用子进程，再验证结果并统一保存。
 
-## 需求对照
-
-| 需求 | 实现 |
-| --- | --- |
-| UC-M-01 数据准备 | `dataset.py`：按 `(电站, 日期, 小时)` 聚合，特征含小时/星期/周末/节假日/滞后 1·24·168h/滑动均值/电站编码/模拟天气 |
-| UC-M-02 模型 | `model.py`：`RandomForestRegressor`，MAE / RMSE / MAPE，与「上周同一时刻」基线对比 |
-| UC-M-03 输出回写 | `predict.py` → `db.write_forecasts`：写入 `load_forecasts` 表 |
-| UC-M-04 可复现性 | 固定随机种子；`train` / `predict` / `evaluate` 三种模式；产物 `ml/models/load_rf.pkl` |
-
-## 目录结构
-
-```text
-ml/
-├── config.py        # 路径与可调参数
-├── db.py            # SQLite 访问：读会话 / 站点，回写 load_forecasts
-├── dataset.py       # 合成时序、特征工程、递归预测
-├── model.py         # 模型定义、指标、产物持久化
-├── train.py         # 训练模式
-├── predict.py       # 预测回写模式
-├── evaluate.py      # 评估模式
-├── requirements.txt
-├── pyproject.toml
-└── README.md
+```sh
+uv sync --project ml --frozen
+uv run --project ml python -m ml.service --input /tmp/forecast-input.json --output /tmp/forecast-output.json
+uv run --project ml python -m ml.backtest
+uv run --project ml pytest ml/tests -q
+uv run --project ml ruff check ml
 ```
 
-## 环境准备
+通常无需手写 JSON：管理端“负荷预测”运行预测任务即可；后台启动命令和 JSON 合同
+见 `docs/接口契约.md`。`train` / `evaluate` 为 `backtest` 的兼容别名，`predict` 为
+`service` 的兼容别名；旧 `--db` 选项与混合合成历史的旧管线已移除。
 
-项目约定使用 `uv` 管理 Python 依赖（见仓库 README）。二选一：
+业务预测：
 
-```bash
-# 方式 A：uv（在仓库根目录执行）
-uv sync --project ml
+- 每桩按完整历史会话重叠秒数分摊到小时，kWh/完整小时等于平均 kW。最末不完整小时
+  不作为已知训练标签；只用最近完整小时做显式持续值估计。
+- 至少 14 天历史、48 个非零小时才能训练固定种子的随机森林；直接输出未来 24 个
+  整点小时，不递归灌入未来真实值。稀疏历史为时段均值基线，无历史为短期状态持续估计。
+- 每桩输出经额定功率约束，故障/离线/重启桩预测为零；站级电量严格为桩级之和，
+  空闲桩估计保守取整且不超出可用设备数。1/6/24 小时均可直接读取。
+- 高峰采用历史完整小时（含零值）的85分位数；无历史采用容量70%。相对需求高峰
+  可用于提前值守，不代表过载故障。阈值随输出保存，且不使用未来值调阈值。
+- 特征包含历史负荷、充电时段、星期/年周期和中国法定节假日/调休。
+  可选输入 `weather:[{stationId,date:'YYYY-MM-DD',temperatureC,precipitationMm}]` 提供
+  历史日天气；仅使用原点前一个已经结束的自然日，不使用未来实测天气。当前业务服务
+  未配置天气源时明确标记缺失，不随机编造天气。
+- 源标签明确为“课程演示业务数据”，给出模型/基线、历史截止和天气来源。
+  预测是小时平均负荷估计，不能等同于桩的瞬时遥测。模拟充电的时间倍率也会随结果记录。
 
-# 方式 B：pip（在仓库根目录执行）
-python3 -m pip install -r ml/requirements.txt
+公开数据回测：
+
+```sh
+uv run --project ml python -m ml.backtest \
+  --data reference/datasets/jiaxing_2025/Dataset/Charging_Data.csv \
+  --output ml/artifacts/jiaxing
 ```
 
-依赖：`numpy`、`pandas`、`scikit-learn`。
+数据由 [Figshare 嘉兴充电数据集](https://doi.org/10.6084/m9.figshare.28182251) 下载，
+`Weather_Data.csv` 与交易 CSV 放在同一目录。原始数据不提交 Git。
+脚本固定按时间前 80% 训练、后 20% 每 6 小时滚动原点测试，所有 24 步标签必须位于
+训练截止时间前；标准化仅使用训练数据。特征使用原点已知的历史负荷、前一日真实天气
+和法定日历。保留均匀分摊前后的总电量审计，使用 MAE/RMSE/WAPE 与上周同期基线比较。
 
-## 运行（三种模式）
+生成 `report.json`、`report.md`、`models.pkl` 到已忽略的 artifacts 目录。
+可提交的本次完整回测报告在 `reports/jiaxing/`。报告如实保留模型不及基线的结果，
+不把公开历史站点模型用于名称、规模与时间均不同的课程业务站点。
+模型超参数固定、没有在测试集选模型或调整参数，公开回测不等同于当前业务精度保证。
 
-脚本以包形式运行，需在**仓库根目录**执行：
-
-```bash
-# 1. 训练：生成模型并打印指标
-uv run --project ml python -m ml.train --db database/charge_platform.db
-
-# 2. 评估：留出集指标 + 基线对比（需先训练）
-uv run --project ml python -m ml.evaluate --db database/charge_platform.db
-
-# 3. 预测：预测未来 1/6/24 小时并回写 load_forecasts
-uv run --project ml python -m ml.predict --db database/charge_platform.db
-```
-
-`--db` 默认指向 `database/charge_platform.db`，应与两个 Qt 客户端共用同一份数据库文件。
-首次运行前请先初始化数据库：
-
-```bash
-sqlite3 database/charge_platform.db < database/schema.sql
-sqlite3 database/charge_platform.db < database/seed.sql
-```
-
-`--horizons 1,6,24` 可调整预测时距；`--seed` 可覆盖随机种子。
-
-## 数据说明（已知限制）
-
-演示种子数据刻意稀疏（每站每天仅一单 @08:00），不足以让模型学到日内峰谷。
-因此 `dataset.py` 会：
-
-1. 生成**确定性**的合成逐小时负荷（日峰谷形状 × 周末系数 × 天气系数 × 站点系数），
-   并按各站**桩容量**估算高峰负荷量级（单位 kW）；
-2. 把真实充电会话按小时分摊后**叠加**到合成基线上，让真实数据也进入训练集。
-
-这样既保留了真实充电记录，又让模型有足够的日内变化信号。合成与天气均用固定
-种子，训练与预测严格可复现（UC-M-04）。
-
-> 如需更真实的预测，可在 `seed.sql` 中增加每站每日多时段的充电会话，合成数据
-> 仍会作为兜底参与训练。
+中国日历来自 [chinese-calendar](https://github.com/liriansu-opus/chinese-calendar)，
+当前锁定版本覆盖 2004–2026；超出年份会回退周末特征并标记日历未知，更新数据依赖后
+再扩展年份。无需网络调用即可预测。
