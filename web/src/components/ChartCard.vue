@@ -8,6 +8,10 @@ defineProps<{
 
 <template>
   <article class="chart-card" :class="className">
+    <span class="corner corner--tl" />
+    <span class="corner corner--tr" />
+    <span class="corner corner--bl" />
+    <span class="corner corner--br" />
     <header class="chart-card__header">
       <div>
         <span v-if="eyebrow" class="chart-card__eyebrow">{{ eyebrow }}</span>

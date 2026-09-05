@@ -18,7 +18,7 @@ function render() {
     tooltip: { trigger: 'axis', formatter: (items: any[]) => `${items[0]?.axisValue}<br/><b>¥ ${Number(items[0]?.value ?? 0).toFixed(2)}</b>` },
     xAxis: { type: 'category', boundaryGap: false, data: dates, axisLabel: { color: '#71839b', fontSize: 10, interval: Math.max(0, Math.floor(dates.length / 6) - 1) }, axisLine: { lineStyle: { color: 'rgba(122,153,190,.2)' } }, axisTick: { show: false } },
     yAxis: { type: 'value', axisLabel: { color: '#71839b', fontSize: 10, formatter: (value: number) => `¥${value}` }, splitLine: { lineStyle: { color: 'rgba(122,153,190,.12)', type: 'dashed' } } },
-    series: [{ type: 'line', smooth: true, symbol: 'circle', symbolSize: 5, data: values, lineStyle: { width: 3, color: '#41d9ee' }, itemStyle: { color: '#b5f8ff', borderColor: '#41d9ee', borderWidth: 2 }, areaStyle: { color: new graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(45,220,238,.34)' }, { offset: 1, color: 'rgba(45,220,238,0)' }]) } }],
+    series: [{ type: 'line', smooth: true, symbol: 'circle', symbolSize: 5, data: values, lineStyle: { width: 3, color: '#41d9ee', shadowBlur: 14, shadowColor: 'rgba(65,217,238,.6)' }, itemStyle: { color: '#b5f8ff', borderColor: '#41d9ee', borderWidth: 2, shadowBlur: 8, shadowColor: 'rgba(65,217,238,.5)' }, areaStyle: { color: new graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(45,220,238,.34)' }, { offset: 1, color: 'rgba(45,220,238,0)' }]) } }],
   }, true)
 }
 

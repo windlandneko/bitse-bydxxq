@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import ChartCard from './components/ChartCard.vue'
 import ChargerTypeDonut from './components/ChargerTypeDonut.vue'
+import ForecastEval from './components/ForecastEval.vue'
 import ForecastLine from './components/ForecastLine.vue'
 import HourlyHeatmap from './components/HourlyHeatmap.vue'
 import KpiCards from './components/KpiCards.vue'
@@ -17,7 +18,12 @@ let clockTimer: number | undefined
 onMounted(() => { clockTimer = window.setInterval(() => { clock.value = new Date() }, 1000) })
 onBeforeUnmount(() => { if (clockTimer) window.clearInterval(clockTimer) })
 
-const clockText = computed(() => clock.value.toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }))
+const clockTime = computed(() => clock.value.toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }))
+const clockDate = computed(() => {
+  const d = clock.value
+  const week = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()]
+  return `${d.getFullYear()}年${String(d.getMonth() + 1).padStart(2, '0')}月${String(d.getDate()).padStart(2, '0')}日 星期${week}`
+})
 const dataCutoffText = computed(() => data.value.dataCutoff ? formatDate(data.value.dataCutoff) : '暂无')
 const lastSuccessText = computed(() => lastSuccessAt.value ? formatDate(lastSuccessAt.value) : '尚未成功读取')
 
@@ -29,22 +35,41 @@ function formatDate(value: string) {
 
 <template>
   <div class="dashboard-shell">
+    <div class="bg-grid" />
+    <div class="scanline" />
     <div class="ambient ambient--one" />
     <div class="ambient ambient--two" />
+    <div class="ambient ambient--three" />
+    <div class="radar radar--left" />
+    <div class="radar radar--right" />
+
     <div class="dashboard-frame">
       <header class="topbar">
-        <div class="brand-lockup">
-          <div class="brand-mark"><span>⚡</span></div>
+        <div class="topbar__side topbar__side--left">
+          <div class="dept-logo"><span>⚡</span></div>
           <div>
-            <div class="brand-kicker">NCS · ENERGY NETWORK</div>
-            <h1>东软电动汽车充电桩应用管理平台</h1>
+            <div class="dept-name">东软集团 · 智慧能源事业部</div>
+            <div class="dept-sub">NCS SMART ENERGY COMMAND CENTER</div>
           </div>
         </div>
-        <div class="topbar-meta">
+
+        <div class="topbar__title">
+          <div class="title-wing title-wing--left"><i /><i /><i /></div>
+          <div class="title-text">
+            <h1>电动汽车充电桩运行监测指挥平台</h1>
+            <div class="title-sub">EV CHARGING · OPERATION COMMAND &amp; VISUALIZATION</div>
+          </div>
+          <div class="title-wing title-wing--right"><i /><i /><i /></div>
+        </div>
+
+        <div class="topbar__side topbar__side--right">
+          <div class="clock-time">{{ clockTime }}</div>
+          <div class="clock-date">{{ clockDate }}</div>
           <div class="live-status"><span class="live-dot" />系统运行中</div>
-          <div class="topbar-clock">{{ clockText }}</div>
         </div>
       </header>
+
+      <div class="topbar-rule" />
 
       <div v-if="error" class="alert-bar" role="status">
         <span>数据源暂不可用：{{ error }}</span>
@@ -79,6 +104,15 @@ function formatDate(value: string) {
           </div>
         </section>
       </main>
+
+      <section v-if="data.forecastEval" class="eval-panel">
+        <ChartCard title="真实数据模型评估" eyebrow="ML EVALUATION">
+          <template #tools>
+            <span class="legend-chip"><i class="legend-chip__dot legend-chip__dot--cyan" />随机森林 vs 上周同时刻基线</span>
+          </template>
+          <ForecastEval :data="data.forecastEval" />
+        </ChartCard>
+      </section>
 
       <footer class="dashboard-footer">
         <span><b class="footer-pulse" />数据源：SQLite 聚合快照</span>
